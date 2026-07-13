@@ -1,0 +1,13 @@
+# Artefactos generados
+dashboard.html
+dashboard.html.tmp
+server.log
+refresh.log
+
+# Config local (valores personales)
+settings.py
+
+# Python / macOS
+__pycache__/
+*.pyc
+.DS_Store

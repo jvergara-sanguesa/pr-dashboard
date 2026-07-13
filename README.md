@@ -131,8 +131,8 @@ otro Mac:
    `~/Downloads` (macOS bloquea el acceso de agentes en segundo plano a esas
    carpetas). Ubicación recomendada:
    ```bash
-   git clone <URL-del-repo> ~/Library/Application\ Support/toku-pr-dashboard
-   cd ~/Library/Application\ Support/toku-pr-dashboard
+   git clone https://github.com/jvergara-sanguesa/pr-dashboard.git ~/Library/Application\ Support/pr-dashboard
+   cd ~/Library/Application\ Support/pr-dashboard
    ```
 
 3. **Config** (opcional): para filtrar por una org de GitHub,
@@ -159,7 +159,7 @@ otro Mac:
 
 6. **Alias** (opcional) en tu `~/.zshrc` para refrescar desde la terminal:
    ```bash
-   alias prdash='python3 "$HOME/Library/Application Support/toku-pr-dashboard/build.py" && open "$HOME/Library/Application Support/toku-pr-dashboard/dashboard.html"'
+   alias prdash='python3 "$HOME/Library/Application Support/pr-dashboard/build.py" && open "$HOME/Library/Application Support/pr-dashboard/dashboard.html"'
    ```
 
 ### Qué personalizar

@@ -1,4 +1,4 @@
-# PR Dashboard (Toku)
+# PR Dashboard
 
 Dashboard personal de tus **Pull Requests abiertas** en GitHub. Genera un HTML
 estático y autocontenido a partir de los datos que trae `gh`, sin servidor y sin

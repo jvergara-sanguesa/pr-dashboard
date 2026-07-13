@@ -12,11 +12,11 @@
     <key>ProgramArguments</key>
     <array>
         <string>/usr/bin/python3</string>
-        <string>/Users/YOUR_USERNAME/Library/Application Support/toku-pr-dashboard/server.py</string>
+        <string>/Users/YOUR_USERNAME/Library/Application Support/pr-dashboard/server.py</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/YOUR_USERNAME/Library/Application Support/toku-pr-dashboard</string>
+    <string>/Users/YOUR_USERNAME/Library/Application Support/pr-dashboard</string>
 
     <key>EnvironmentVariables</key>
     <dict>
@@ -33,8 +33,8 @@
     <true/>
 
     <key>StandardOutPath</key>
-    <string>/Users/YOUR_USERNAME/Library/Application Support/toku-pr-dashboard/server.log</string>
+    <string>/Users/YOUR_USERNAME/Library/Application Support/pr-dashboard/server.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/YOUR_USERNAME/Library/Application Support/toku-pr-dashboard/server.log</string>
+    <string>/Users/YOUR_USERNAME/Library/Application Support/pr-dashboard/server.log</string>
 </dict>
 </plist>

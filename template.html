@@ -40,7 +40,7 @@
     text-align: right; white-space: nowrap; }
 
   /* KPI tiles */
-  .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 26px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 12px; margin-bottom: 26px; }
   .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 16px 16px 14px; box-shadow: var(--shadow); position: relative; overflow: hidden;
     cursor: pointer; transition: border-color .15s, transform .1s; text-align: left; }
@@ -53,6 +53,8 @@
     text-transform: uppercase; letter-spacing: .04em; display: flex; align-items: center; gap: 6px; }
   .kpi .stripe { position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--neutral); }
   .kpi.k-total .stripe { background: var(--accent); }
+  .kpi.k-action .stripe { background: var(--accent); } .kpi.k-action .num { color: var(--accent); }
+  .kpi.k-rebase .stripe { background: var(--warn); } .kpi.k-rebase .num { color: var(--warn); }
   .kpi.k-ready .stripe { background: var(--ok); }  .kpi.k-ready .num { color: var(--ok); }
   .kpi.k-review .stripe { background: var(--warn); } .kpi.k-review .num { color: var(--warn); }
   .kpi.k-ci .stripe { background: var(--crit); }    .kpi.k-ci .num { color: var(--crit); }
@@ -140,6 +142,8 @@
   .t-review { background: var(--warn-soft); color: var(--warn); }
   .t-conflict { background: var(--crit-soft); color: var(--crit); }
   .t-neutral { background: var(--neutral-soft); color: var(--neutral); }
+  .t-rebase { background: var(--warn-soft); color: var(--warn); }
+  .t-action { background: var(--accent); color: #fff; font-weight: 700; }
   .t-ci-ok .dot { background: var(--ok); } .t-ci-fail .dot { background: var(--crit); }
   .t-ci-pend .dot { background: var(--warn); }
 
@@ -364,14 +368,25 @@ function severity(p){
   if(p.reviewDecision==="REVIEW_REQUIRED") return "warn";
   return "neutral";
 }
-// attention priority: lower = more urgent
+function needsRebase(p){ return p.mergeState==="BEHIND"; }
+// Whose turn is it? Returns the reason it needs YOUR action, or null (waiting on others).
+const ACTION_ORDER = ["CI en rojo","resolver conflictos","actualizar branch",
+                      "aplicar cambios pedidos","responder comentarios","listo para mergear"];
+function myActionReason(p){
+  if(p.isDraft) return null;
+  if(ciState(p)==="fail") return "CI en rojo";
+  if(p.mergeable==="CONFLICTING" || p.mergeState==="DIRTY") return "resolver conflictos";
+  if(needsRebase(p)) return "actualizar branch";
+  if(p.reviewDecision==="CHANGES_REQUESTED") return "aplicar cambios pedidos";
+  if(p.threads && p.threads.unresolved>0) return "responder comentarios";
+  if(p.reviewDecision==="APPROVED") return "listo para mergear";
+  return null;  // esperando review de otros
+}
+// attention priority: lower = more urgent. My-action PRs first (by reason severity).
 function priority(p){
-  const ci = ciState(p);
-  if(ci==="fail") return 0;
-  if(p.mergeable==="CONFLICTING") return 1;
-  if(p.reviewDecision==="APPROVED") return 2;   // ready to merge → act
-  if(p.reviewDecision==="REVIEW_REQUIRED") return 3;
-  return 4;
+  const r = myActionReason(p);
+  if(r) return ACTION_ORDER.indexOf(r);
+  return 10;  // esperando a otros / borrador
 }
 function daysAgo(iso){ return Math.floor((NOW - new Date(iso)) / 86400000); }
 function ageLabel(iso){
@@ -394,10 +409,12 @@ function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/
 // ---- KPIs ----
 const kpiDefs = [
   {key:"total", cls:"k-total", label:"Abiertas", test:()=>true},
+  {key:"action", cls:"k-action", label:"Requiere mi acción", test:p=>myActionReason(p)!==null},
   {key:"ready", cls:"k-ready", label:"Listas p/ merge", test:p=>p.reviewDecision==="APPROVED" && ciState(p)!=="fail" && p.mergeable!=="CONFLICTING"},
   {key:"review", cls:"k-review", label:"Esperan review", test:p=>p.reviewDecision==="REVIEW_REQUIRED"},
   {key:"ci", cls:"k-ci", label:"CI en rojo", test:p=>p.ci.fail>0},
   {key:"conflict", cls:"k-conflict", label:"Con conflictos", test:p=>p.mergeable==="CONFLICTING"},
+  {key:"rebase", cls:"k-rebase", label:"Necesita rebase", test:p=>needsRebase(p)},
 ];
 let activeKpi = null;
 
@@ -444,9 +461,11 @@ function renderBranchChips(){
 // ---- state chips ----
 let activeState = null;
 const STATE_DEFS = [
+  {key:"myaction",  label:"Requiere mi acción", test:p=>myActionReason(p)!==null},
   {key:"unapproved", label:"Sin aprobar", test:p=>p.reviewDecision!=="APPROVED"},
   {key:"approved",   label:"Aprobado",    test:p=>p.reviewDecision==="APPROVED"},
   {key:"conflict",   label:"Con conflicto", test:p=>p.mergeable==="CONFLICTING"},
+  {key:"rebase",     label:"Necesita rebase", test:p=>needsRebase(p)},
 ];
 function renderStateChips(){
   const chips = STATE_DEFS.map(s=>{
@@ -502,6 +521,13 @@ function reviewTag(p){
   if(p.reviewDecision==="APPROVED") return `<span class="tag t-approved">✓ Aprobada</span>`;
   if(p.reviewDecision==="REVIEW_REQUIRED") return `<span class="tag t-review">👀 Falta review</span>`;
   return `<span class="tag t-neutral">— sin review</span>`;
+}
+function rebaseTag(p){
+  return needsRebase(p) ? `<span class="tag t-rebase">⤺ detrás de base</span>` : "";
+}
+function actionTag(p){
+  const r = myActionReason(p);
+  return r ? `<span class="tag t-action">⚡ Tu turno: ${r}</span>` : "";
 }
 function threadSeverity(p){
   const items = (p.threads && p.threads.items) || [];
@@ -570,7 +596,7 @@ function card(p){
       <span class="arw">→</span>
       <span class="b" title="${esc(p.base)}">${esc(p.base)}</span>
     </div>
-    <div class="tags">${reviewTag(p)} ${ciTag(p)} ${threadTag(p)}</div>
+    <div class="tags">${actionTag(p)} ${reviewTag(p)} ${ciTag(p)} ${rebaseTag(p)} ${threadTag(p)}</div>
     ${threadPanel(p)}
     ${reviewerPanel(p)}
     <div class="card-foot">

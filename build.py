@@ -56,8 +56,8 @@ def _rec(key: str, seconds: float) -> None:
 SEARCH_FIELDS = "number,title,repository,url,createdAt,updatedAt,isDraft,labels"
 VIEW_FIELDS = (
     "number,title,url,isDraft,createdAt,updatedAt,additions,deletions,"
-    "changedFiles,reviewDecision,mergeable,baseRefName,headRefName,labels,"
-    "comments,reviews,statusCheckRollup"
+    "changedFiles,reviewDecision,mergeable,mergeStateStatus,baseRefName,"
+    "headRefName,labels,comments,reviews,statusCheckRollup"
 )
 
 PR_QUERY = """
@@ -256,6 +256,7 @@ def enrich(url: str) -> dict | None:
         "changedFiles": pr["changedFiles"],
         "reviewDecision": pr.get("reviewDecision", ""),
         "mergeable": pr.get("mergeable", "UNKNOWN"),
+        "mergeState": pr.get("mergeStateStatus", "UNKNOWN"),
         "base": pr["baseRefName"],
         "head": pr["headRefName"],
         "repo": re.sub(rf"^{re.escape(ORG)}/", "", repo) if ORG else repo,

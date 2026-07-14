@@ -97,6 +97,34 @@
   .chip.active .c { opacity: .9; }
   .chips-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
     color: var(--ink-faint); font-weight: 600; align-self: center; margin-right: 2px; }
+  .chip.chip-edit { color: var(--ink-faint); border-style: dashed; }
+  .chip.chip-edit:hover { color: var(--ink); border-color: var(--border-strong); }
+
+  /* Editor de grupos (localStorage) */
+  .group-editor { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; margin: -8px 0 24px; max-width: 540px; display: flex; flex-direction: column; gap: 8px; }
+  .group-editor[hidden] { display: none; }
+  .ge-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--ink-muted); display: flex; gap: 8px; align-items: baseline; margin-bottom: 2px; }
+  .ge-hint { font-size: 10px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--ink-faint); }
+  .ge-row { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12.5px; }
+  .ge-label { font-weight: 600; color: var(--ink); min-width: 96px; }
+  .ge-match { color: var(--ink-muted); flex: 1; }
+  .ge-del { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 13px;
+    padding: 2px 7px; border-radius: 6px; }
+  .ge-del:hover { color: var(--crit); background: var(--crit-soft); }
+  .ge-empty { color: var(--ink-faint); font-family: var(--mono); font-size: 12px; }
+  .ge-add { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .ge-add input { padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--ink); font-size: 13px; font-family: var(--font); min-width: 140px; }
+  .ge-add input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .ge-add button { padding: 7px 13px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent);
+    color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .ge-add button:hover { opacity: .9; }
+  .ge-foot { margin-top: 4px; }
+  .ge-foot button { padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); background: none;
+    color: var(--ink-faint); font-size: 12px; cursor: pointer; }
+  .ge-foot button:hover { color: var(--ink); border-color: var(--border-strong); }
 
   /* Grid */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(410px, 1fr)); gap: 14px; }
@@ -218,10 +246,23 @@
   .stacks { display: flex; flex-direction: column; gap: 18px; }
   .stack-group { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
     padding: 14px 18px 16px; box-shadow: var(--shadow); }
-  .stack-ground { font-family: var(--mono); font-size: 12px; color: var(--ink-muted); margin-bottom: 6px;
-    display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .stack-ground { font-family: var(--mono); font-size: 12px; color: var(--ink-muted); margin-bottom: 10px;
+    display: flex; flex-direction: column; gap: 8px; }
   .stack-ground .b { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px;
     padding: 1px 8px; color: var(--accent); font-weight: 600; }
+  .sg-top { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .sg-health { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .hb { width: 84px; height: 6px; border-radius: 3px; background: var(--surface-2);
+    border: 1px solid var(--border); overflow: hidden; flex: none; }
+  .hb-fill { display: block; height: 100%; background: var(--ok); }
+  .hlabel { color: var(--ink); }
+  .hpill { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+  .hp-ok { background: var(--ok-soft); color: var(--ok); }
+  .hp-fail { background: var(--crit-soft); color: var(--crit); }
+  .hp-pend, .hp-warn { background: var(--warn-soft); color: var(--warn); }
+  .hnums { margin-left: auto; }
+  .hnums .add { color: var(--ok); }
+  .hnums .del { color: var(--crit); }
   .snode-row { display: flex; align-items: stretch; gap: 10px; padding-top: 12px; }
   .snode-row .conn { font-family: var(--mono); color: var(--ink-faint); font-size: 14px; padding-top: 12px;
     flex: none; }
@@ -237,6 +278,14 @@
   .mini-head a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
   .stag { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
     background: var(--warn-soft); color: var(--warn); }
+  /* En el stack, los tags de acción dominan (sólidos, más grandes); el resto recede */
+  .mini .tags .stag { font-size: 12px; font-weight: 700; padding: 4px 12px; }
+  .mini .tags .tag { font-size: 10px; opacity: .72; }
+  .stag.st-go { background: var(--ok); color: var(--bg); }
+  .stag.st-block { background: var(--crit); color: var(--bg); }
+  .stag.st-first { background: var(--accent); color: var(--bg); }
+  .stag.st-restack { background: var(--warn); color: var(--bg); }
+  .stag.st-wait { background: var(--neutral-soft); color: var(--ink-muted); font-weight: 600; }
 
   /* Clickable thread item + modal */
   .thread-item { cursor: pointer; }
@@ -330,6 +379,7 @@
   <div class="chips" id="branch-chips"></div>
   <div class="chips" id="state-chips"></div>
   <div class="chips" id="group-chips"></div>
+  <div class="group-editor" id="group-editor" hidden></div>
 
   <p class="count-line" id="count-line"></p>
   <div class="grid" id="grid"></div>
@@ -485,29 +535,84 @@ function renderStateChips(){
 }
 
 // ---- custom group chips (por substring en el nombre del repo) ----
+// Config editable desde la UI y persistida en localStorage (por navegador).
 let activeGroup = null;
-const CUSTOM_GROUPS = [
+const GROUPS_KEY = "prdash.groups";
+const DEFAULT_GROUPS = [
   {label:"Forum", match:"forum"},
   {label:"Servipag", match:"servipag"},
   {label:"Remediation", match:"remediation"},
   {label:"Conciliation", match:"conciliation"},
   {label:"Card", match:"card"},
 ];
+function getGroups(){
+  try {
+    const raw = localStorage.getItem(GROUPS_KEY);
+    if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr)) return arr; }
+  } catch(e){}
+  return DEFAULT_GROUPS.map(g=>({...g}));
+}
+let GROUPS = getGroups();
+let groupEditorOpen = false;
+function saveGroups(arr){
+  GROUPS = arr;
+  try { localStorage.setItem(GROUPS_KEY, JSON.stringify(arr)); } catch(e){}
+  if(activeGroup && !GROUPS.some(g=>g.match===activeGroup)) activeGroup = null;
+  render();            // re-aplica filtros y repinta chips
+  renderGroupEditor(); // refresca el panel abierto
+}
 function renderGroupChips(){
-  const groups = CUSTOM_GROUPS
-    .map(g=>({...g, n: DATA.filter(p=>p.repo.toLowerCase().includes(g.match)).length}))
+  const groups = GROUPS
+    .map(g=>({...g, n: DATA.filter(p=>p.repo.toLowerCase().includes((g.match||"").toLowerCase())).length}))
     .filter(g=>g.n>0);
-  const el = document.getElementById("group-chips");
-  if(!groups.length){ el.innerHTML=""; return; }
   const chips = groups.map(g=>
-    `<button class="chip ${activeGroup===g.match?'active':''}" data-gr="${g.match}">${g.label} <span class="c">${g.n}</span></button>`).join("");
+    `<button class="chip ${activeGroup===g.match?'active':''}" data-gr="${esc(g.match)}">${esc(g.label)} <span class="c">${g.n}</span></button>`).join("");
+  const el = document.getElementById("group-chips");
   el.innerHTML = `<span class="chips-label">Grupo</span>
-    <button class="chip ${activeGroup===null?'active':''}" data-gr="">Todos <span class="c">${DATA.length}</span></button>`+chips;
-  el.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+    <button class="chip ${activeGroup===null?'active':''}" data-gr="">Todos <span class="c">${DATA.length}</span></button>`
+    + chips
+    + `<button class="chip chip-edit" id="grp-edit-btn" title="Editar grupos">⚙︎ editar</button>`;
+  el.querySelectorAll(".chip[data-gr]").forEach(b=>b.onclick=()=>{
     const v=b.dataset.gr;
     activeGroup = v==="" ? null : (activeGroup===v?null:v);
     render();
   });
+  document.getElementById("grp-edit-btn").onclick=()=>{ groupEditorOpen=!groupEditorOpen; renderGroupEditor(); };
+}
+function renderGroupEditor(){
+  const el = document.getElementById("group-editor");
+  if(!groupEditorOpen){ el.hidden = true; el.innerHTML = ""; return; }
+  el.hidden = false;
+  const rows = GROUPS.length ? GROUPS.map((g,i)=>`
+    <div class="ge-row">
+      <span class="ge-label">${esc(g.label)}</span>
+      <span class="ge-match">${esc(g.match)}</span>
+      <button class="ge-del" data-i="${i}" title="Quitar">✕</button>
+    </div>`).join("") : `<div class="ge-empty">sin grupos definidos</div>`;
+  el.innerHTML = `
+    <div class="ge-title">Editar grupos <span class="ge-hint">se guarda en este navegador</span></div>
+    ${rows}
+    <div class="ge-add">
+      <input id="ge-label" placeholder="Nombre (ej. Forum)" autocomplete="off">
+      <input id="ge-match" placeholder="keyword del repo (ej. forum)" autocomplete="off">
+      <button id="ge-addbtn">+ añadir</button>
+    </div>
+    <div class="ge-foot"><button id="ge-reset">restablecer defaults</button></div>`;
+  el.querySelectorAll(".ge-del").forEach(b=>b.onclick=()=>{
+    const arr = GROUPS.slice(); arr.splice(+b.dataset.i, 1); saveGroups(arr);
+  });
+  const addGroup=()=>{
+    const label = document.getElementById("ge-label").value.trim();
+    const match = document.getElementById("ge-match").value.trim().toLowerCase();
+    if(!label || !match) return;
+    saveGroups([...GROUPS, {label, match}]);
+  };
+  document.getElementById("ge-addbtn").onclick = addGroup;
+  document.getElementById("ge-match").addEventListener("keydown", e=>{ if(e.key==="Enter") addGroup(); });
+  document.getElementById("ge-reset").onclick=()=>{
+    try{ localStorage.removeItem(GROUPS_KEY); }catch(e){}
+    saveGroups(DEFAULT_GROUPS.map(g=>({...g})));
+  };
 }
 
 // ---- card ----
@@ -631,6 +736,37 @@ function stackRoots(){
   return DATA.filter(p=> !hasParent(p) && childrenOf(p).length>0)
              .sort((a,b)=> new Date(b.updatedAt)-new Date(a.updatedAt));
 }
+function parentPr(p){ return DATA.find(x=>x.head===p.base) || null; }
+function stackRollup(root){
+  const s = flattenStack(root);
+  return {
+    total: s.length,
+    approved: s.filter(p=>p.reviewDecision==="APPROVED").length,
+    adds: s.reduce((a,p)=>a+p.additions,0),
+    dels: s.reduce((a,p)=>a+p.deletions,0),
+    ci: s.some(p=>ciState(p)==="fail") ? "fail" : (s.some(p=>ciState(p)==="pend") ? "pend" : "ok"),
+    conflicts: s.some(p=>p.mergeable==="CONFLICTING"),
+    restacks: s.filter(p=>needsRebase(p)).length,
+  };
+}
+// merge order: root (bottom of stack) merges first; children wait for their parent.
+function mergeOrderTag(p, depth){
+  if(depth===0){
+    if(ciState(p)==="fail" || p.mergeable==="CONFLICTING")
+      return `<span class="stag st-block">🔴 bloquea el stack</span>`;
+    if(p.reviewDecision==="APPROVED")
+      return `<span class="stag st-go">🟢 mergear primero</span>`;
+    return `<span class="stag st-first">⬇ primero en la fila</span>`;
+  }
+  const par = parentPr(p);
+  return par ? `<span class="stag st-wait">⏳ espera #${par.number}</span>` : "";
+}
+function restackTag(p){
+  if(!needsRebase(p)) return "";
+  const par = parentPr(p);
+  return par ? `<span class="stag st-restack">⤺ restack sobre #${par.number}</span>`
+             : `<span class="stag st-restack">⤺ actualizar sobre ${esc(p.base)}</span>`;
+}
 function stackNode(p, depth){
   const sev = severity(p);
   const tt = (p.threads && p.threads.unresolved)
@@ -644,9 +780,23 @@ function stackNode(p, depth){
         <a href="${p.url}" target="_blank" rel="noopener">${esc(p.title)}</a>
       </div>
       <div class="branches"><span class="b" title="${esc(p.head)}">${esc(p.head)}</span></div>
-      <div class="tags">${reviewTag(p)} ${ciTag(p)} ${tt}</div>
+      <div class="tags">${mergeOrderTag(p,depth)} ${reviewTag(p)} ${ciTag(p)} ${restackTag(p)} ${tt}</div>
     </div>
   </div>${kids}`;
+}
+function healthBar(r){
+  const roll = stackRollup(r);
+  const pct = roll.total ? Math.round(roll.approved/roll.total*100) : 0;
+  const ciTxt = roll.ci==="ok" ? "CI ✓" : (roll.ci==="fail" ? "CI ✗" : "CI …");
+  return `<div class="sg-top">base <span class="b">${esc(r.base)}</span> · ${roll.total} PRs · arriba se mergea primero</div>
+    <div class="sg-health">
+      <span class="hb"><span class="hb-fill" style="width:${pct}%"></span></span>
+      <span class="hlabel">${roll.approved}/${roll.total} aprobadas</span>
+      <span class="hpill hp-${roll.ci}">${ciTxt}</span>
+      ${roll.conflicts?'<span class="hpill hp-fail">⚠ conflictos</span>':''}
+      ${roll.restacks?`<span class="hpill hp-warn">⤺ ${roll.restacks} restack</span>`:''}
+      <span class="hnums"><span class="add">+${roll.adds}</span> <span class="del">−${roll.dels}</span></span>
+    </div>`;
 }
 function renderStacks(q){
   let roots = stackRoots();
@@ -659,13 +809,11 @@ function renderStacks(q){
   }
   const grid = document.getElementById("grid");
   grid.className = "stacks";
-  grid.innerHTML = roots.length ? roots.map(r=>{
-    const size = flattenStack(r).length;
-    return `<div class="stack-group">
-      <div class="stack-ground">base <span class="b">${esc(r.base)}</span> · ${size} PRs apiladas · leer de arriba hacia abajo</div>
+  grid.innerHTML = roots.length ? roots.map(r=>
+    `<div class="stack-group">
+      <div class="stack-ground">${healthBar(r)}</div>
       ${stackNode(r,0)}
-    </div>`;
-  }).join("") : `<div class="empty">No hay PRs apiladas (ninguna PR usa como base la rama de otra).</div>`;
+    </div>`).join("") : `<div class="empty">No hay PRs apiladas (ninguna PR usa como base la rama de otra).</div>`;
   document.getElementById("count-line").textContent =
     `${roots.length} stack(s) · ${roots.reduce((n,r)=>n+flattenStack(r).length,0)} PRs encadenadas`;
 }

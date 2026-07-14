@@ -23,12 +23,17 @@ enviar nada a terceros: todo corre local con tu propio token de `gh`.
 - **Tarjetas** por PR con estado de CI, review, tamaño, antigüedad y branches.
 - **Filtros** combinables: base (`master`/`development`/…/`stacked`), estado
   (requiere mi acción / sin aprobar / aprobado / con conflicto / necesita rebase)
-  y grupos custom por nombre de repo.
+  y **grupos custom** por nombre de repo — **editables desde la UI** (⚙ editar) y
+  persistidos en `localStorage` (por navegador, sin rebuild).
 - **Comentarios sin resolver**: panel desplegable + modal con el comentario
   completo renderizado en markdown y link directo a GitHub.
 - **Suggested reviewers** (solo en PRs no aprobadas): top 6 contribuyentes del
   repo + los que sugiere GitHub.
-- **Vista de stacks**: reconstruye el árbol de PRs apiladas (`base == head`).
+- **Vista de stacks accionable**: reconstruye el árbol de PRs apiladas
+  (`base == head`) y por cada stack muestra una **barra de salud** (X/Y aprobadas,
+  CI combinado, conflictos, restacks, ±líneas), el **orden de merge** (`🟢 mergear
+  primero` / `🔴 bloquea el stack` / `⏳ espera #padre`) y avisos de **restack**
+  (`⤺ restack sobre #padre`).
 
 ---
 

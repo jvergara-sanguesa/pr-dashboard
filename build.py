@@ -204,6 +204,55 @@ def fetch_contributors(owner: str, name: str) -> list:
     return contributors
 
 
+# Solo los fallos en estas categorías marcan una PR como "CI en rojo".
+# El resto (sonar, datadog, bots de review) se ignora para el estado rojo.
+IMPORTANT_CHECK_CATEGORIES = ("ci", "pytest", "docs")
+
+
+def categorize_check(name: str) -> str:
+    """Map a check name to ci/pytest/docs/other ('other' = ruido ignorado)."""
+    n = name.lower()
+    if "pytest" in n:
+        return "pytest"
+    if n.startswith("docs") or "docs-check" in n or "check-agent-docs" in n:
+        return "docs"
+    if (n.startswith("linters") or "build base image" in n
+            or "check-service-catalog" in n or "check-toku-lib-imports" in n
+            or "repo configuration" in n):
+        return "ci"
+    return "other"
+
+
+def summarize_checks(checks: list) -> dict:
+    """Count checks and flag which IMPORTANT categories are failing."""
+    fail_concl = {"FAILURE", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED", "STARTUP_FAILURE"}
+    total = pending = success = fail = 0
+    fail_cats: set[str] = set()
+    fail_names: list[str] = []
+    for c in checks:
+        name = c.get("name") or c.get("context") or ""
+        concl = c.get("conclusion") or ""
+        state = c.get("state") or ""
+        status = c.get("status") or ""
+        is_fail = concl in fail_concl or state in {"FAILURE", "ERROR"}
+        total += 1
+        fail += int(is_fail)
+        pending += int((status not in ("", "COMPLETED")) or state == "PENDING")
+        success += int(concl == "SUCCESS" or state == "SUCCESS")
+        if is_fail:
+            cat = categorize_check(name)
+            if cat in IMPORTANT_CHECK_CATEGORIES:
+                fail_cats.add(cat)
+                if name not in fail_names:
+                    fail_names.append(name)
+    order = {c: i for i, c in enumerate(IMPORTANT_CHECK_CATEGORIES)}
+    return {
+        "total": total, "fail": fail, "pending": pending, "success": success,
+        "failCats": sorted(fail_cats, key=lambda c: order.get(c, 9)),
+        "failNames": fail_names[:10],
+    }
+
+
 def run(cmd: list[str]) -> str:
     """Run a command and return stdout, raising with stderr on failure."""
     res = subprocess.run(cmd, capture_output=True, text=True)
@@ -234,7 +283,6 @@ def enrich(url: str) -> dict | None:
         return None
     pr = json.loads(res.stdout)
     checks = pr.get("statusCheckRollup") or []
-    fail_conclusions = {"FAILURE", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED"}
     owner, _, name = repo.partition("/")
     details = fetch_pr_details(owner, name, pr["number"])
     threads = details["threads"]
@@ -265,12 +313,7 @@ def enrich(url: str) -> dict | None:
         "reviews": len(pr.get("reviews") or []),
         "threads": threads,
         "reviewers": reviewers,
-        "ci": {
-            "total": len(checks),
-            "fail": sum(1 for c in checks if c.get("conclusion") in fail_conclusions),
-            "pending": sum(1 for c in checks if c.get("status") != "COMPLETED"),
-            "success": sum(1 for c in checks if c.get("conclusion") == "SUCCESS"),
-        },
+        "ci": summarize_checks(checks),
     }
 
 

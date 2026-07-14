@@ -17,6 +17,9 @@ enviar nada a terceros: todo corre local con tu propio token de `gh`.
   hay CI en rojo, conflictos, branch detrás de base, cambios pedidos, comentarios
   sin resolver, o está lista para mergear; si solo falta review, es turno de otros.
   Se ve como tag `⚡ Tu turno: <motivo>` y ordena por atención.
+- **CI diferenciada**: "CI en rojo" solo cuenta **checks clave** (CI/build/linters,
+  pytest, docs-check) e **ignora ruido** (SonarCloud, Datadog, bots de review). El
+  tag muestra cuál falla — `✗ docs`, `✗ CI · pytest` — con el nombre exacto en tooltip.
 - **Tarjetas** por PR con estado de CI, review, tamaño, antigüedad y branches.
 - **Filtros** combinables: base (`master`/`development`/…/`stacked`), estado
   (requiere mi acción / sin aprobar / aprobado / con conflicto / necesita rebase)
@@ -175,6 +178,9 @@ otro Mac:
   tus PRs de todos tus repos. `settings.py` está gitignoreado.
 - **Grupos custom**: en `template.html`, edita `const CUSTOM_GROUPS` (chips que
   filtran por substring en el nombre del repo).
+- **Qué checks son "clave"**: en `build.py`, `categorize_check()` mapea cada check
+  a `ci`/`pytest`/`docs`/`other`; solo los tres primeros marcan "CI en rojo".
+  Ajusta los patrones a los nombres de tus workflows.
 - **Horario del auto-refresh**: en `build.py`, `within_work_hours()` (por defecto
   L–V 09:00–18:30). Lo usa el auto-refresh del server; los refresh manuales
   (botón ↻, `prdash`, doble-click) ignoran el horario.

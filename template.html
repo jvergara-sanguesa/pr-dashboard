@@ -354,12 +354,14 @@ const DATA = __PR_DATA__;
 const STD_BASES = ["master","main","development","staging"];
 const NOW = new Date();
 
+function ciFailCats(p){ return (p.ci && p.ci.failCats) || []; }
 function ciState(p){
-  if(p.ci.fail>0) return "fail";
+  if(ciFailCats(p).length>0) return "fail";   // solo checks clave (ci/pytest/docs)
   if(p.ci.pending>0) return "pend";
   if(p.ci.total>0) return "ok";
   return "none";
 }
+function catLabel(c){ return c==="ci" ? "CI" : c; }   // "pytest"/"docs" tal cual
 function severity(p){
   const ci = ciState(p);
   if(ci==="fail") return "crit";
@@ -412,7 +414,7 @@ const kpiDefs = [
   {key:"action", cls:"k-action", label:"Requiere mi acción", test:p=>myActionReason(p)!==null},
   {key:"ready", cls:"k-ready", label:"Listas p/ merge", test:p=>p.reviewDecision==="APPROVED" && ciState(p)!=="fail" && p.mergeable!=="CONFLICTING"},
   {key:"review", cls:"k-review", label:"Esperan review", test:p=>p.reviewDecision==="REVIEW_REQUIRED"},
-  {key:"ci", cls:"k-ci", label:"CI en rojo", test:p=>p.ci.fail>0},
+  {key:"ci", cls:"k-ci", label:"CI en rojo", test:p=>ciFailCats(p).length>0},
   {key:"conflict", cls:"k-conflict", label:"Con conflictos", test:p=>p.mergeable==="CONFLICTING"},
   {key:"rebase", cls:"k-rebase", label:"Necesita rebase", test:p=>needsRebase(p)},
 ];
@@ -511,9 +513,13 @@ function renderGroupChips(){
 // ---- card ----
 function ciTag(p){
   const s = ciState(p);
-  if(s==="fail") return `<span class="tag t-ci-fail"><span class="dot"></span>CI ${p.ci.fail}✗ / ${p.ci.total}</span>`;
+  if(s==="fail"){
+    const cats = ciFailCats(p).map(catLabel).join(" · ");
+    const tip = (p.ci.failNames||[]).join(" · ");
+    return `<span class="tag t-ci-fail" title="${esc(tip)}"><span class="dot"></span>✗ ${esc(cats)}</span>`;
+  }
   if(s==="pend") return `<span class="tag t-ci-pend"><span class="dot"></span>CI ${p.ci.pending} pend.</span>`;
-  if(s==="ok")   return `<span class="tag t-ci-ok"><span class="dot"></span>CI ${p.ci.total}/${p.ci.total}</span>`;
+  if(s==="ok")   return `<span class="tag t-ci-ok"><span class="dot"></span>CI ✓</span>`;
   return `<span class="tag t-neutral">sin CI</span>`;
 }
 function reviewTag(p){
@@ -525,9 +531,13 @@ function reviewTag(p){
 function rebaseTag(p){
   return needsRebase(p) ? `<span class="tag t-rebase">⤺ detrás de base</span>` : "";
 }
-function actionTag(p){
+function actionLabel(p){
   const r = myActionReason(p);
-  return r ? `<span class="tag t-action">⚡ Tu turno: ${r}</span>` : "";
+  if(r==="CI en rojo"){ return "falla " + ciFailCats(p).map(catLabel).join(" · "); }
+  return r;
+}
+function actionTag(p){
+  return myActionReason(p) ? `<span class="tag t-action">⚡ Tu turno: ${esc(actionLabel(p))}</span>` : "";
 }
 function threadSeverity(p){
   const items = (p.threads && p.threads.items) || [];

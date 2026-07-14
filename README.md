@@ -11,10 +11,16 @@ enviar nada a terceros: todo corre local con tu propio token de `gh`.
 
 ## Qué muestra
 
-- **KPIs**: abiertas, listas para merge, esperan review, CI en rojo, con conflictos.
+- **KPIs**: abiertas, requiere mi acción, listas para merge, esperan review,
+  CI en rojo, con conflictos, necesita rebase.
+- **Triage "requiere mi acción"**: clasifica de quién es el turno — tu turno si
+  hay CI en rojo, conflictos, branch detrás de base, cambios pedidos, comentarios
+  sin resolver, o está lista para mergear; si solo falta review, es turno de otros.
+  Se ve como tag `⚡ Tu turno: <motivo>` y ordena por atención.
 - **Tarjetas** por PR con estado de CI, review, tamaño, antigüedad y branches.
 - **Filtros** combinables: base (`master`/`development`/…/`stacked`), estado
-  (sin aprobar / aprobado / con conflicto) y grupos custom por nombre de repo.
+  (requiere mi acción / sin aprobar / aprobado / con conflicto / necesita rebase)
+  y grupos custom por nombre de repo.
 - **Comentarios sin resolver**: panel desplegable + modal con el comentario
   completo renderizado en markdown y link directo a GitHub.
 - **Suggested reviewers** (solo en PRs no aprobadas): top 6 contribuyentes del

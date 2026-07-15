@@ -278,10 +278,11 @@
   .sp-hint { font-size: 11.5px; color: var(--ink-faint); margin-left: auto; }
   .panel-body { padding: 4px 16px 16px; }
 
-  /* Sync pipeline card */
-  .sync-list { display: flex; flex-direction: column; gap: 12px; }
-  .sync-card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2);
-    padding: 13px 15px; }
+  /* Sync pipeline (sin card anidada: se apoya en el panel, grupos con divisor) */
+  .sync-list { display: flex; flex-direction: column; }
+  .sync-card { padding: 14px 0; }
+  .sync-card:first-child { padding-top: 2px; }
+  .sync-card + .sync-card { border-top: 1px solid var(--border); }
   .sync-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
   .sync-head .fork { color: var(--ink-faint); font-family: var(--mono); }
   .sync-head .branch { font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--ink); }
@@ -291,27 +292,33 @@
   .rail-node { flex: 1 1 0; min-width: 108px; display: flex; flex-direction: column; align-items: center;
     text-align: center; position: relative; gap: 3px; }
   .rail-node .dot { width: 13px; height: 13px; border-radius: 50%; background: var(--neutral);
-    border: 2px solid var(--surface-2); box-shadow: 0 0 0 1px var(--border); z-index: 1; }
+    border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border); z-index: 1; }
   .rail-node.st-ok .dot { background: var(--ok); }
   .rail-node.st-warn .dot { background: var(--warn); }
   .rail-node.st-crit .dot { background: var(--crit); }
   .rail-node .connector { position: absolute; top: 6px; left: 50%; width: 100%; height: 2px;
     background: var(--border); z-index: 0; }
+  .rail-node .connector::after { content: ""; position: absolute; left: calc(50% - 3px); top: -3px;
+    border: 4px solid transparent; border-left-color: var(--ink-faint); }
   .rail-node:last-child .connector { display: none; }
   .rail-node .base { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--ink);
     margin-top: 4px; }
-  .rail-node a.pr { font-family: var(--mono); font-size: 11.5px; color: var(--ink-muted); text-decoration: none; }
+  .rail-node .pr { font-family: var(--mono); font-size: 11.5px; color: var(--ink-muted); text-decoration: none; }
   .rail-node a.pr:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
-  .rail-node .state { font-size: 10.5px; font-weight: 600; }
+  .rail-node .state { font-size: 11px; font-weight: 600; }
   .rail-node.st-ok .state { color: var(--ok); }
   .rail-node.st-warn .state { color: var(--warn); }
   .rail-node.st-crit .state { color: var(--crit); }
   .rail-node.st-neutral .state { color: var(--ink-faint); }
+  .rail-node.ghost { opacity: .6; }
+  .rail-node.ghost .dot { background: none; border: 2px dashed var(--ink-faint); box-shadow: none; }
+  .rail-node.ghost .base, .rail-node.ghost .state, .rail-node.ghost .pr { color: var(--ink-faint); }
 
-  /* Stacked tree view */
-  .stacks { display: flex; flex-direction: column; gap: 18px; }
-  .stack-group { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
-    padding: 14px 18px 16px; box-shadow: var(--shadow); }
+  /* Stacked tree view (sin card anidada: se apoya en el panel, stacks con divisor) */
+  .stacks { display: flex; flex-direction: column; }
+  .stack-group { padding: 14px 0 16px; }
+  .stack-group:first-child { padding-top: 2px; }
+  .stack-group + .stack-group { border-top: 1px solid var(--border); }
   .stack-ground { font-family: var(--mono); font-size: 12px; color: var(--ink-muted); margin-bottom: 10px;
     display: flex; flex-direction: column; gap: 8px; }
   .stack-ground .b { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px;
@@ -906,7 +913,25 @@ function renderStackedPanel(){
 
 // ---- Sync panel (misma rama head hacia >1 base; honra Grupo + búsqueda, no Base) ----
 const BASE_RANK = { development:0, dev:0, staging:1, stg:1, master:2, main:2 };
+const STAGE_NAME = ["development","staging","master"];
 function baseRank(b){ return (b in BASE_RANK) ? BASE_RANK[b] : 99; }
+// Build the rail slots: fill missing standard stages between the lowest and
+// highest present stage with ghost nodes, so a skipped "staging" is visible.
+function syncRail(prs){
+  const std = prs.filter(p=> baseRank(p.base)<=2);
+  const nonStd = prs.filter(p=> baseRank(p.base)>2);
+  const slots = [];
+  if(std.length){
+    const ranks = std.map(p=>baseRank(p.base));
+    const lo = Math.min(...ranks), hi = Math.max(...ranks);
+    for(let r=lo; r<=hi; r++){
+      const pr = std.find(p=>baseRank(p.base)===r);
+      slots.push(pr ? {pr, base:pr.base} : {ghost:true, base:STAGE_NAME[r]});
+    }
+  }
+  nonStd.forEach(p=> slots.push({pr:p, base:p.base}));
+  return slots;
+}
 function syncGroups(){
   const q = qval();
   const byHead = {};
@@ -935,12 +960,21 @@ function renderSyncPanel(){
   document.getElementById("sync-panel").hidden = groups.length===0;
   document.getElementById("sync-body").innerHTML = groups.length
     ? `<div class="sync-list">` + groups.map(g=>{
-        const nodes = g.prs.map(p=>`<div class="rail-node st-${severity(p)}">
-          <span class="connector"></span><span class="dot"></span>
-          <span class="base">${esc(p.base)}</span>
-          <a class="pr" href="${p.url}" target="_blank" rel="noopener">#${p.number}</a>
-          <span class="state">${syncStateWord(p)}</span>
-        </div>`).join("");
+        const nodes = syncRail(g.prs).map(slot=>{
+          if(slot.ghost) return `<div class="rail-node ghost">
+            <span class="connector"></span><span class="dot"></span>
+            <span class="base">${esc(slot.base)}</span>
+            <span class="pr">—</span>
+            <span class="state">sin PR</span>
+          </div>`;
+          const p = slot.pr;
+          return `<div class="rail-node st-${severity(p)}">
+            <span class="connector"></span><span class="dot"></span>
+            <span class="base">${esc(p.base)}</span>
+            <a class="pr" href="${p.url}" target="_blank" rel="noopener">#${p.number}</a>
+            <span class="state">${syncStateWord(p)}</span>
+          </div>`;
+        }).join("");
         return `<div class="sync-card">
           <div class="sync-head"><span class="fork">⋔</span><span class="branch">${esc(g.head)}</span><span class="repo">${esc(g.repo)}</span></div>
           <div class="rail">${nodes}</div>

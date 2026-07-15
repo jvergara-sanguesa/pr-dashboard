@@ -55,6 +55,7 @@
   .kpi.k-action .num { color: var(--accent); }
   .kpi.k-rebase .num { color: var(--warn); }
   .kpi.k-ready .num { color: var(--ok); }
+  .kpi.k-approved .num { color: var(--ok); }
   .kpi.k-review .num { color: var(--warn); }
   .kpi.k-ci .num { color: var(--crit); }
   .kpi.k-conflict .num { color: var(--crit); }
@@ -518,6 +519,7 @@ const kpiDefs = [
   {key:"total", cls:"k-total", label:"Abiertas", test:()=>true},
   {key:"action", cls:"k-action", label:"Requiere mi acción", test:p=>myActionReason(p)!==null},
   {key:"ready", cls:"k-ready", label:"Listas p/ merge", test:p=>p.reviewDecision==="APPROVED" && ciState(p)!=="fail" && p.mergeable!=="CONFLICTING"},
+  {key:"approved", cls:"k-approved", label:"Aprobadas", test:p=>p.reviewDecision==="APPROVED"},
   {key:"review", cls:"k-review", label:"Esperan review", test:p=>p.reviewDecision==="REVIEW_REQUIRED"},
   {key:"ci", cls:"k-ci", label:"CI en rojo", test:p=>ciFailCats(p).length>0},
   {key:"conflict", cls:"k-conflict", label:"Con conflictos", test:p=>p.mergeable==="CONFLICTING"},

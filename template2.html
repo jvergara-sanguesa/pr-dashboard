@@ -349,7 +349,12 @@
   .modal-body pre { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
     padding: 12px 13px; overflow-x: auto; margin: 0 0 12px; }
   .modal-body pre code { background: none; border: none; padding: 0; font-size: 12px; line-height: 1.5;
-    white-space: pre; }
+    white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+  .modal-body details { margin: 0 0 12px; border: 1px solid var(--border); border-radius: 10px;
+    padding: 9px 12px; background: var(--surface-2); }
+  .modal-body summary { cursor: pointer; color: var(--ink-muted); font-weight: 600; user-select: none; }
+  .modal-body summary:hover { color: var(--ink); }
+  .modal-body details[open] > summary { margin-bottom: 8px; }
   .modal-foot { padding: 12px 20px 16px; border-top: 1px solid var(--border); }
   .modal-foot a { color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 600; }
   .modal-foot a:hover { text-decoration: underline; text-underline-offset: 2px; }
@@ -891,6 +896,62 @@ function render(){
     `Mostrando ${list.length} de ${DATA.length} PRs`;
 }
 
+// Render a GitHub comment (markdown + embedded HTML) as SAFE html.
+// Parses the raw HTML inertly (in a <template>, no script exec / no image load),
+// sanitizes to a tag/attr whitelist (drops script/iframe/style/on*/javascript:),
+// and renders markdown found in block-level text nodes (prose, code fences).
+// Keeps <details> collapsibles, code, links and images (images allowed for now).
+const MD_ALLOWED = new Set(['P','BR','STRONG','B','EM','I','CODE','PRE','UL','OL','LI','A','DETAILS','SUMMARY','H1','H2','H3','H4','H5','H6','BLOCKQUOTE','HR','SPAN','DIV','DEL','KBD','TABLE','THEAD','TBODY','TR','TH','TD']);
+const MD_DROP = new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','NOSCRIPT','SVG','FORM','INPUT','BUTTON','TEXTAREA','SELECT','BASE','IMG','PICTURE','SOURCE']);
+const MD_BLOCK_PARENT = new Set(['DIV','DETAILS','LI','BLOCKQUOTE','TD']);
+const MD_LITERAL = new Set(['PRE','CODE','SUMMARY']);
+function safeUrl(u){ return /^(https?:|mailto:)/i.test(u||"") ? u : null; }
+function ancestorIn(node, set){
+  for(let p=node.parentNode; p && p.tagName; p=p.parentNode){ if(set.has(p.tagName)) return true; }
+  return false;
+}
+function sanitizeFrag(root){
+  [...root.childNodes].forEach(node=>{
+    if(node.nodeType===8){ node.remove(); return; }              // comment node
+    if(node.nodeType===3){                                       // text node
+      if(!node.textContent.trim()) return;
+      const p = node.parentNode;
+      const blockCtx = p && (p.nodeType===11 || MD_BLOCK_PARENT.has(p.tagName));
+      if(blockCtx && !ancestorIn(node, MD_LITERAL)){
+        const t = document.createElement('template');
+        t.innerHTML = mdToHtml(node.textContent);                // safe: escapes then formats
+        node.replaceWith(t.content);
+      }
+      return;
+    }
+    if(node.nodeType!==1){ node.remove(); return; }
+    const tag = node.tagName;
+    if(MD_DROP.has(tag)){ node.remove(); return; }
+    if(!MD_ALLOWED.has(tag)){ sanitizeFrag(node); node.replaceWith(...node.childNodes); return; }
+    const keep = {};
+    if(tag==='A'){ const h=safeUrl(node.getAttribute('href')); if(h){ keep.href=h; keep.target='_blank'; keep.rel='noopener noreferrer'; } }
+    [...node.attributes].forEach(at=>node.removeAttribute(at.name));
+    Object.entries(keep).forEach(([k,v])=>node.setAttribute(k,v));
+    sanitizeFrag(node);
+  });
+}
+function renderComment(src){
+  if(!src) return "";
+  let s = String(src);
+  // Protect code (fenced + inline) BEFORE HTML parsing, so angle-bracket text
+  // inside a fence (<comment>, <file context>) isn't mis-parsed as HTML tags.
+  const blocks = [], inls = [];
+  s = s.replace(/```[^\n]*\n([\s\S]*?)```/g, (m,c)=>{ blocks.push(c.replace(/\n$/,"")); return "\uE000B"+(blocks.length-1)+"\uE001"; });
+  s = s.replace(/`([^`\n]+)`/g, (m,c)=>{ inls.push(c); return "\uE000I"+(inls.length-1)+"\uE001"; });
+  const t = document.createElement("template");
+  t.innerHTML = s;
+  sanitizeFrag(t.content);
+  let out = t.innerHTML;
+  out = out.replace(/\uE000B(\d+)\uE001/g, (m,n)=>`<pre><code>${esc(blocks[+n])}</code></pre>`);
+  out = out.replace(/\uE000I(\d+)\uE001/g, (m,n)=>`<code>${esc(inls[+n])}</code>`);
+  return out;
+}
+
 // ---- minimal, safe markdown renderer (escapes first, then formats) ----
 function mdToHtml(src){
   if(!src) return "";
@@ -958,7 +1019,8 @@ function openThread(it){
     `<span>${esc(it.path||"—")}${it.line?":"+it.line:""}</span>`+
     `<span class="who">@${esc(it.author)}</span>`+
     (it.outdated?'<span class="out">outdated</span>':"");
-  document.getElementById("modal-body").innerHTML = mdToHtml(it.body || it.title || "(sin contenido)");
+  document.getElementById("modal-body").innerHTML =
+    renderComment(it.body || "") || mdToHtml(it.title || "(sin contenido)");
   const link = document.getElementById("modal-link");
   if(it.url){ link.href = it.url; link.style.display = ""; } else { link.style.display = "none"; }
   lastFocused = document.activeElement;

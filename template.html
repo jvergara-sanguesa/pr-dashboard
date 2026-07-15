@@ -336,9 +336,12 @@
   .hnums { margin-left: auto; }
   .hnums .add { color: var(--ok); }
   .hnums .del { color: var(--crit); }
-  .snode-row { display: flex; align-items: stretch; gap: 10px; padding-top: 12px; }
-  .snode-row .conn { font-family: var(--mono); color: var(--ink-faint); font-size: 14px; padding-top: 12px;
-    flex: none; }
+  .snode-row { display: flex; align-items: flex-start; gap: 10px; padding-top: 12px; }
+  .snode-row .order { flex: none; width: 22px; height: 22px; margin-top: 11px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border); color: var(--ink-muted);
+    font-family: var(--mono); font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .snode-row .order.first { border-color: var(--accent); color: var(--accent); }
   .mini { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
     padding: 11px 13px; display: flex; flex-direction: column; gap: 7px;
     min-width: 0; }
@@ -865,28 +868,36 @@ function restackTag(p){
   return par ? `<span class="stag st-restack">⤺ restack sobre #${par.number}</span>`
              : `<span class="stag st-restack">⤺ actualizar sobre ${esc(p.base)}</span>`;
 }
-function stackNode(p, depth){
-  const sev = severity(p);
-  const tt = (p.threads && p.threads.unresolved)
-    ? `<span class="stag">🧵 ${p.threads.unresolved}</span>` : "";
-  const kids = childrenOf(p).map(k=>stackNode(k, depth+1)).join("");
-  return `<div class="snode-row" style="padding-left:${depth*26}px">
-    <span class="conn">${depth>0?'↳':'┌'}</span>
-    <div class="mini sev-${sev}">
-      <div class="mini-head">
-        <span class="repo">${esc(p.repo)}</span><span class="prnum">#${p.number}</span>
-        <a href="${p.url}" target="_blank" rel="noopener">${esc(p.title)}</a>
+function stackFlat(p, depth, acc){
+  acc.push({p, depth});
+  childrenOf(p).forEach(k=> stackFlat(k, depth+1, acc));
+  return acc;
+}
+// Pila invertida: el primero a mergear (root, depth 0) queda ABAJO; los apilados
+// encima suben. Badge de orden = depth+1 (1 = mergea primero, abajo del todo).
+function stackNodes(root){
+  return stackFlat(root, 0, []).reverse().map(({p, depth})=>{
+    const sev = severity(p), order = depth + 1;
+    const tt = (p.threads && p.threads.unresolved)
+      ? `<span class="stag">🧵 ${p.threads.unresolved}</span>` : "";
+    return `<div class="snode-row" style="padding-left:${depth*26}px">
+      <span class="order${order===1?' first':''}" title="orden de merge">${order}</span>
+      <div class="mini sev-${sev}">
+        <div class="mini-head">
+          <span class="repo">${esc(p.repo)}</span><span class="prnum">#${p.number}</span>
+          <a href="${p.url}" target="_blank" rel="noopener">${esc(p.title)}</a>
+        </div>
+        <div class="branches"><span class="b" title="${esc(p.head)}">${esc(p.head)}</span></div>
+        <div class="tags">${mergeOrderTag(p,depth)} ${reviewTag(p)} ${ciTag(p)} ${restackTag(p)} ${tt}</div>
       </div>
-      <div class="branches"><span class="b" title="${esc(p.head)}">${esc(p.head)}</span></div>
-      <div class="tags">${mergeOrderTag(p,depth)} ${reviewTag(p)} ${ciTag(p)} ${restackTag(p)} ${tt}</div>
-    </div>
-  </div>${kids}`;
+    </div>`;
+  }).join("");
 }
 function healthBar(r){
   const roll = stackRollup(r);
   const pct = roll.total ? Math.round(roll.approved/roll.total*100) : 0;
   const ciTxt = roll.ci==="ok" ? "CI ✓" : (roll.ci==="fail" ? "CI ✗" : "CI …");
-  return `<div class="sg-top">base <span class="b">${esc(r.base)}</span> · ${roll.total} PRs · arriba se mergea primero</div>
+  return `<div class="sg-top">base <span class="b">${esc(r.base)}</span> · ${roll.total} PRs · ↓ el #1 (abajo) se mergea primero</div>
     <div class="sg-health">
       <span class="hb"><span class="hb-fill" style="width:${pct}%"></span></span>
       <span class="hlabel">${roll.approved}/${roll.total} aprobadas</span>
@@ -907,7 +918,7 @@ function renderStackedPanel(){
   document.getElementById("stacked-panel").hidden = roots.length===0;
   document.getElementById("stacked-body").innerHTML = roots.length
     ? `<div class="stacks">` + roots.map(r=>
-        `<div class="stack-group"><div class="stack-ground">${healthBar(r)}</div>${stackNode(r,0)}</div>`).join("") + `</div>`
+        `<div class="stack-group"><div class="stack-ground">${healthBar(r)}</div>${stackNodes(r)}</div>`).join("") + `</div>`
     : "";
 }
 

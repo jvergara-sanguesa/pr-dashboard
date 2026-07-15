@@ -1,6 +1,8 @@
 # Artefactos generados
 dashboard.html
-dashboard.html.tmp
+dashboard-v2.html
+data.json
+*.tmp
 server.log
 refresh.log
 

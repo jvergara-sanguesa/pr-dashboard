@@ -19,6 +19,30 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / "template.html"
 OUTPUT = HERE / "dashboard.html"
+DATA_JSON = HERE / "data.json"            # datos desacoplados (los consume /v2)
+TEMPLATE_V2 = HERE / "template2.html"      # front nuevo (data-driven vía fetch)
+OUTPUT_V2 = HERE / "dashboard-v2.html"
+
+
+def _write_atomic(path, text):
+    """Write text to path atomically (temp + os.replace)."""
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def _wrap_html(fragment: str) -> str:
+    """Wrap an HTML fragment into a standalone document (doctype + head)."""
+    m = re.search(r"<title>(.*?)</title>", fragment, flags=re.S)
+    title = m.group(1).strip() if m else "Mis PRs"
+    if m:
+        fragment = fragment.replace(m.group(0), "", 1)
+    return (
+        '<!doctype html>\n<html lang="es">\n<head>\n'
+        '<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        f"<title>{title}</title>\n</head>\n<body>\n{fragment}\n</body>\n</html>\n"
+    )
 
 
 def _load_org() -> str:
@@ -356,27 +380,20 @@ def build_dashboard() -> dict:
     stamp = now.strftime("%Y-%m-%d · %H:%M -04")
 
     _t = time.perf_counter()
-    fragment = TEMPLATE.read_text(encoding="utf-8")
-    fragment = fragment.replace("__PR_DATA__", json.dumps(enriched, ensure_ascii=False))
-    fragment = fragment.replace("__GENERATED_AT__", stamp)
-    fragment = fragment.replace("__AUTHOR__", AUTHOR_LOGIN)
+    # Datos desacoplados: los consume el front /v2 (y cualquier otro cliente).
+    _write_atomic(DATA_JSON, json.dumps(
+        {"generatedAt": stamp, "author": AUTHOR_LOGIN, "prs": enriched}, ensure_ascii=False))
 
-    title_m = re.search(r"<title>(.*?)</title>", fragment, flags=re.S)
-    title = title_m.group(1).strip() if title_m else "Mis PRs"
-    if title_m:
-        fragment = fragment.replace(title_m.group(0), "", 1)
-
-    html = (
-        '<!doctype html>\n<html lang="es">\n<head>\n'
-        '<meta charset="utf-8">\n'
-        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        f"<title>{title}</title>\n</head>\n<body>\n{fragment}\n</body>\n</html>\n"
-    )
-    # Atomic write: never serve a half-written file to a concurrent GET.
-    tmp = OUTPUT.with_suffix(".html.tmp")
-    tmp.write_text(html, encoding="utf-8")
-    os.replace(tmp, OUTPUT)
+    # Front principal (data-driven): shell que hace fetch a /data.json (datos en data.json, no horneados).
+    html = _wrap_html(TEMPLATE.read_text(encoding="utf-8"))
+    _write_atomic(OUTPUT, html)
     log(f"HTML escrito: {len(html):,} bytes ({time.perf_counter() - _t:.1f}s)")
+
+    # Copia de trabajo v2 (idéntica; separada para iterar antes de promover a template.html).
+    if TEMPLATE_V2.exists():
+        html_v2 = _wrap_html(TEMPLATE_V2.read_text(encoding="utf-8"))
+        _write_atomic(OUTPUT_V2, html_v2)
+        log(f"HTML v2 escrito: {len(html_v2):,} bytes")
 
     log("desglose de llamadas a gh:")
     for key in sorted(_TIMERS, key=lambda k: -_TIMERS[k]):

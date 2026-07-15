@@ -14,7 +14,7 @@ from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import build  # local module (build.py in the same directory)
-from build import OUTPUT
+from build import OUTPUT, OUTPUT_V2, DATA_JSON
 
 HOST = "127.0.0.1"
 PORT = 8787
@@ -89,6 +89,17 @@ class Handler(BaseHTTPRequestHandler):
             if not OUTPUT.exists():
                 build_sync()
             self._send(200, OUTPUT.read_bytes())
+        elif path in ("/v2", "/dashboard-v2.html"):
+            if not OUTPUT_V2.exists():
+                build_sync()
+            if OUTPUT_V2.exists():
+                self._send(200, OUTPUT_V2.read_bytes())
+            else:
+                self._send(404, "v2 no generado (falta template2.html)", "text/plain; charset=utf-8")
+        elif path == "/data.json":
+            if not DATA_JSON.exists():
+                build_sync()
+            self._send(200, DATA_JSON.read_bytes(), "application/json")
         elif path == "/status":
             payload = {**STATUS, "log": list(build.LOG_LINES)}
             self._send(200, json.dumps(payload), "application/json")

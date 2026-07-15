@@ -1,11 +1,23 @@
 # Artefactos generados
 dashboard.html
-dashboard.html.tmp
+dashboard-v2.html
+data.json
+*.tmp
 server.log
 refresh.log
 
 # Config local (valores personales)
 settings.py
+
+# Skills instaladas localmente (ej. impeccable vía npx skills add)
+.agents/
+.claude/skills/
+skills-lock.json
+
+# Docs y footprint generados por impeccable (locales)
+.impeccable/
+PRODUCT.md
+DESIGN.md
 
 # Python / macOS
 __pycache__/

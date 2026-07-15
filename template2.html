@@ -260,6 +260,54 @@
   .rv-chip:hover { border-color: var(--accent); }
   .rv-empty { font-size: 11.5px; color: var(--ink-faint); font-family: var(--mono); }
 
+  /* Section panels (Stacked / Sync) */
+  .panels { display: flex; flex-direction: column; gap: 10px; margin: 0 0 20px; }
+  .panels:empty { display: none; }
+  .section-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+  .section-panel[hidden] { display: none; }
+  .section-panel > summary { cursor: pointer; list-style: none; padding: 12px 16px; display: flex;
+    align-items: center; gap: 10px; user-select: none; }
+  .section-panel > summary::-webkit-details-marker { display: none; }
+  .section-panel > summary::before { content: "▸"; color: var(--ink-faint); font-size: 12px;
+    transition: transform .15s; }
+  .section-panel[open] > summary::before { transform: rotate(90deg); }
+  .section-panel > summary:hover .sp-label { color: var(--accent); }
+  .sp-label { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .sp-n { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent);
+    background: var(--accent-soft); padding: 1px 8px; border-radius: 999px; }
+  .sp-hint { font-size: 11.5px; color: var(--ink-faint); margin-left: auto; }
+  .panel-body { padding: 4px 16px 16px; }
+
+  /* Sync pipeline card */
+  .sync-list { display: flex; flex-direction: column; gap: 12px; }
+  .sync-card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2);
+    padding: 13px 15px; }
+  .sync-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .sync-head .fork { color: var(--ink-faint); font-family: var(--mono); }
+  .sync-head .branch { font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--ink); }
+  .sync-head .repo { font-family: var(--mono); font-size: 11.5px; color: var(--accent);
+    background: var(--accent-soft); padding: 1px 8px; border-radius: 6px; margin-left: auto; }
+  .rail { display: flex; align-items: flex-start; overflow-x: auto; padding-bottom: 2px; }
+  .rail-node { flex: 1 1 0; min-width: 108px; display: flex; flex-direction: column; align-items: center;
+    text-align: center; position: relative; gap: 3px; }
+  .rail-node .dot { width: 13px; height: 13px; border-radius: 50%; background: var(--neutral);
+    border: 2px solid var(--surface-2); box-shadow: 0 0 0 1px var(--border); z-index: 1; }
+  .rail-node.st-ok .dot { background: var(--ok); }
+  .rail-node.st-warn .dot { background: var(--warn); }
+  .rail-node.st-crit .dot { background: var(--crit); }
+  .rail-node .connector { position: absolute; top: 6px; left: 50%; width: 100%; height: 2px;
+    background: var(--border); z-index: 0; }
+  .rail-node:last-child .connector { display: none; }
+  .rail-node .base { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--ink);
+    margin-top: 4px; }
+  .rail-node a.pr { font-family: var(--mono); font-size: 11.5px; color: var(--ink-muted); text-decoration: none; }
+  .rail-node a.pr:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .rail-node .state { font-size: 10.5px; font-weight: 600; }
+  .rail-node.st-ok .state { color: var(--ok); }
+  .rail-node.st-warn .state { color: var(--warn); }
+  .rail-node.st-crit .state { color: var(--crit); }
+  .rail-node.st-neutral .state { color: var(--ink-faint); }
+
   /* Stacked tree view */
   .stacks { display: flex; flex-direction: column; gap: 18px; }
   .stack-group { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
@@ -414,6 +462,17 @@
   <div class="chips" id="group-chips"></div>
   <div class="group-editor" id="group-editor" hidden></div>
 
+  <div class="panels" id="panels">
+    <details class="section-panel" id="stacked-panel" hidden>
+      <summary><span class="sp-label">Stacked</span><span class="sp-n" id="stacked-n"></span><span class="sp-hint">árbol de PRs apiladas</span></summary>
+      <div class="panel-body" id="stacked-body"></div>
+    </details>
+    <details class="section-panel" id="sync-panel" hidden>
+      <summary><span class="sp-label">Sync PRs</span><span class="sp-n" id="sync-n"></span><span class="sp-hint">misma rama hacia varios base</span></summary>
+      <div class="panel-body" id="sync-body"></div>
+    </details>
+  </div>
+
   <div class="count-bar">
     <p class="count-line" id="count-line"></p>
     <button class="clear-filters" id="clear-filters" type="button" hidden>limpiar filtros <span class="n" id="clear-n"></span></button>
@@ -498,7 +557,7 @@ function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/
 // ---- filter axes ----
 // KPIs are the single status filter. Base and Group are orthogonal axes.
 function qval(){ return document.getElementById("q").value.trim().toLowerCase(); }
-function passBranch(p){ return !activeBranch || activeBranch==="stacked" || p.base===activeBranch; }
+function passBranch(p){ return !activeBranch || p.base===activeBranch; }
 function passGroup(p){ return !activeGroup || p.repo.toLowerCase().includes(activeGroup); }
 function passSearch(p,q){ return !q || (p.title+" "+p.repo+" "+p.head+" "+p.base+" #"+p.number).toLowerCase().includes(q); }
 // The universe KPI counts and the grid share: everything except the KPI status filter itself,
@@ -553,15 +612,10 @@ function renderKpis(){
 let activeBranch = null;
 function renderBranchChips(){
   const buckets = {};
-  DATA.forEach(p=>{
-    const key = STD_BASES.includes(p.base) ? p.base : "stacked";
-    buckets[key] = (buckets[key]||0)+1;
-  });
-  const order = ["master","development","staging","main","stacked"];
-  const chips = order.filter(k=>buckets[k]).map(k=>{
-    const label = k==="stacked" ? "↳ stacked" : k;
-    return `<button class="chip ${activeBranch===k?'active':''}" data-br="${k}">${label} <span class="c">${buckets[k]}</span></button>`;
-  }).join("");
+  DATA.forEach(p=>{ if(STD_BASES.includes(p.base)) buckets[p.base] = (buckets[p.base]||0)+1; });
+  const order = ["master","development","staging","main"];
+  const chips = order.filter(k=>buckets[k]).map(k=>
+    `<button class="chip ${activeBranch===k?'active':''}" data-br="${k}">${k} <span class="c">${buckets[k]}</span></button>`).join("");
   const el = document.getElementById("branch-chips");
   el.innerHTML = `<span class="chips-label">Base</span>
     <button class="chip ${activeBranch===null?'active':''}" data-br="">Todas <span class="c">${DATA.length}</span></button>`+chips;
@@ -835,24 +889,64 @@ function healthBar(r){
       <span class="hnums"><span class="add">+${roll.adds}</span> <span class="del">−${roll.dels}</span></span>
     </div>`;
 }
-function renderStacks(q){
+// ---- Stacked panel (árbol de PRs apiladas; honra Grupo + búsqueda, no Base) ----
+function renderStackedPanel(){
+  const q = qval();
   let roots = stackRoots();
-  if(activeGroup){
-    roots = roots.filter(r=> flattenStack(r).some(p=> p.repo.toLowerCase().includes(activeGroup)));
-  }
-  if(q){
-    roots = roots.filter(r=> flattenStack(r).some(p=>
-      (p.title+" "+p.repo+" "+p.head+" "+p.base+" #"+p.number).toLowerCase().includes(q)));
-  }
-  const grid = document.getElementById("grid");
-  grid.className = "stacks";
-  grid.innerHTML = roots.length ? roots.map(r=>
-    `<div class="stack-group">
-      <div class="stack-ground">${healthBar(r)}</div>
-      ${stackNode(r,0)}
-    </div>`).join("") : `<div class="empty">No hay PRs apiladas (ninguna PR usa como base la rama de otra).</div>`;
-  document.getElementById("count-line").textContent =
-    `${roots.length} stack(s) · ${roots.reduce((n,r)=>n+flattenStack(r).length,0)} PRs encadenadas`;
+  if(activeGroup) roots = roots.filter(r=> flattenStack(r).some(p=> p.repo.toLowerCase().includes(activeGroup)));
+  if(q) roots = roots.filter(r=> flattenStack(r).some(p=>
+    (p.title+" "+p.repo+" "+p.head+" "+p.base+" #"+p.number).toLowerCase().includes(q)));
+  document.getElementById("stacked-n").textContent = roots.length;
+  document.getElementById("stacked-panel").hidden = roots.length===0;
+  document.getElementById("stacked-body").innerHTML = roots.length
+    ? `<div class="stacks">` + roots.map(r=>
+        `<div class="stack-group"><div class="stack-ground">${healthBar(r)}</div>${stackNode(r,0)}</div>`).join("") + `</div>`
+    : "";
+}
+
+// ---- Sync panel (misma rama head hacia >1 base; honra Grupo + búsqueda, no Base) ----
+const BASE_RANK = { development:0, dev:0, staging:1, stg:1, master:2, main:2 };
+function baseRank(b){ return (b in BASE_RANK) ? BASE_RANK[b] : 99; }
+function syncGroups(){
+  const q = qval();
+  const byHead = {};
+  DATA.forEach(p=>{
+    if(activeGroup && !p.repo.toLowerCase().includes(activeGroup)) return;
+    (byHead[p.head] = byHead[p.head] || []).push(p);
+  });
+  let groups = Object.entries(byHead).filter(([h,prs])=> prs.length>1).map(([head,prs])=>({
+    head, repo: prs[0].repo,
+    prs: prs.slice().sort((a,b)=> baseRank(a.base)-baseRank(b.base) || a.number-b.number),
+  }));
+  if(q) groups = groups.filter(g=> g.prs.some(p=>
+    (p.title+" "+p.repo+" "+p.head+" "+p.base+" #"+p.number).toLowerCase().includes(q)));
+  return groups.sort((a,b)=> a.head.localeCompare(b.head));
+}
+function syncStateWord(p){
+  if(severity(p)==="crit") return ciState(p)==="fail" ? "CI ✗" : "conflicto";
+  if(p.reviewDecision==="APPROVED") return "aprobada";
+  if(needsRebase(p)) return "rebase";
+  if(p.reviewDecision==="REVIEW_REQUIRED") return "falta review";
+  return "—";
+}
+function renderSyncPanel(){
+  const groups = syncGroups();
+  document.getElementById("sync-n").textContent = groups.length;
+  document.getElementById("sync-panel").hidden = groups.length===0;
+  document.getElementById("sync-body").innerHTML = groups.length
+    ? `<div class="sync-list">` + groups.map(g=>{
+        const nodes = g.prs.map(p=>`<div class="rail-node st-${severity(p)}">
+          <span class="connector"></span><span class="dot"></span>
+          <span class="base">${esc(p.base)}</span>
+          <a class="pr" href="${p.url}" target="_blank" rel="noopener">#${p.number}</a>
+          <span class="state">${syncStateWord(p)}</span>
+        </div>`).join("");
+        return `<div class="sync-card">
+          <div class="sync-head"><span class="fork">⋔</span><span class="branch">${esc(g.head)}</span><span class="repo">${esc(g.repo)}</span></div>
+          <div class="rail">${nodes}</div>
+        </div>`;
+      }).join("") + `</div>`
+    : "";
 }
 
 // ---- render ----
@@ -860,15 +954,11 @@ function render(){
   renderKpis();
   renderBranchChips();
   renderGroupChips();
+  renderStackedPanel();
+  renderSyncPanel();
   updateClearFilters();
-  const q = qval();
   const sort = document.getElementById("sort").value;
   const grid = document.getElementById("grid");
-
-  if(activeBranch==="stacked"){
-    renderStacks(q);
-    return;
-  }
   grid.className = "grid";
 
   let list = kpiUniverse();   // base + group + search already applied

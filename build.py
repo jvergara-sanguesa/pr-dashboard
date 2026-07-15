@@ -384,16 +384,12 @@ def build_dashboard() -> dict:
     _write_atomic(DATA_JSON, json.dumps(
         {"generatedAt": stamp, "author": AUTHOR_LOGIN, "prs": enriched}, ensure_ascii=False))
 
-    # Front actual (v1): datos horneados en el HTML.
-    fragment = TEMPLATE.read_text(encoding="utf-8")
-    fragment = fragment.replace("__PR_DATA__", json.dumps(enriched, ensure_ascii=False))
-    fragment = fragment.replace("__GENERATED_AT__", stamp)
-    fragment = fragment.replace("__AUTHOR__", AUTHOR_LOGIN)
-    html = _wrap_html(fragment)
+    # Front principal (data-driven): shell que hace fetch a /data.json (datos en data.json, no horneados).
+    html = _wrap_html(TEMPLATE.read_text(encoding="utf-8"))
     _write_atomic(OUTPUT, html)
-    log(f"HTML v1 escrito: {len(html):,} bytes ({time.perf_counter() - _t:.1f}s)")
+    log(f"HTML escrito: {len(html):,} bytes ({time.perf_counter() - _t:.1f}s)")
 
-    # Front nuevo (v2): shell que hace fetch a /data.json (sin datos horneados).
+    # Copia de trabajo v2 (idéntica; separada para iterar antes de promover a template.html).
     if TEMPLATE_V2.exists():
         html_v2 = _wrap_html(TEMPLATE_V2.read_text(encoding="utf-8"))
         _write_atomic(OUTPUT_V2, html_v2)

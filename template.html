@@ -1,4 +1,4 @@
-<title>Mis PRs · Toku</title>
+<title>Mis PRs · Toku (v2)</title>
 <style>
   /* Committed dark theme — always dark regardless of OS preference or viewer toggle */
   :root, :root[data-theme="light"], :root[data-theme="dark"] {
@@ -7,7 +7,7 @@
     --surface-2: #262034;
     --ink: #EDEAF5;
     --ink-muted: #A79FBC;
-    --ink-faint: #746C88;
+    --ink-faint: #938BA6;
     --border: #2E2740;
     --border-strong: #3B3350;
     --accent: #A585FF;
@@ -16,7 +16,7 @@
     --warn: #F5C061; --warn-soft: #35290F;
     --crit: #FB7185; --crit-soft: #38141B;
     --neutral: #9A93AD; --neutral-soft: #2A2438;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 18px rgba(0,0,0,.35);
+    --shadow: 0 1px 3px rgba(0,0,0,.4);
     --radius: 14px;
     --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
@@ -26,6 +26,7 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font);
     -webkit-font-smoothing: antialiased; line-height: 1.5; }
+  :where(a, button, [tabindex]):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 72px; }
 
   header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
@@ -51,14 +52,13 @@
     font-variant-numeric: tabular-nums; line-height: 1; }
   .kpi .lbl { margin-top: 8px; font-size: 12px; color: var(--ink-muted); font-weight: 500;
     text-transform: uppercase; letter-spacing: .04em; display: flex; align-items: center; gap: 6px; }
-  .kpi .stripe { position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--neutral); }
-  .kpi.k-total .stripe { background: var(--accent); }
-  .kpi.k-action .stripe { background: var(--accent); } .kpi.k-action .num { color: var(--accent); }
-  .kpi.k-rebase .stripe { background: var(--warn); } .kpi.k-rebase .num { color: var(--warn); }
-  .kpi.k-ready .stripe { background: var(--ok); }  .kpi.k-ready .num { color: var(--ok); }
-  .kpi.k-review .stripe { background: var(--warn); } .kpi.k-review .num { color: var(--warn); }
-  .kpi.k-ci .stripe { background: var(--crit); }    .kpi.k-ci .num { color: var(--crit); }
-  .kpi.k-conflict .stripe { background: var(--crit); } .kpi.k-conflict .num { color: var(--crit); }
+  .kpi.k-action .num { color: var(--accent); }
+  .kpi.k-rebase .num { color: var(--warn); }
+  .kpi.k-ready .num { color: var(--ok); }
+  .kpi.k-approved .num { color: var(--ok); }
+  .kpi.k-review .num { color: var(--warn); }
+  .kpi.k-ci .num { color: var(--crit); }
+  .kpi.k-conflict .num { color: var(--crit); }
 
   /* Controls */
   .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 22px; }
@@ -75,7 +75,7 @@
     background-repeat: no-repeat; background-position: right 10px center; }
   select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   .refresh-btn { padding: 10px 16px; border-radius: 10px; border: 1px solid var(--accent);
-    background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; font-family: var(--font);
+    background: var(--accent); color: var(--bg); font-size: 14px; font-weight: 600; font-family: var(--font);
     cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: opacity .15s; }
   .refresh-btn:hover { opacity: .9; }
   .refresh-btn:disabled { opacity: .55; cursor: default; }
@@ -92,7 +92,7 @@
     background: var(--surface); color: var(--ink-muted); font-size: 13px; font-weight: 500;
     cursor: pointer; transition: all .13s; display: inline-flex; align-items: center; gap: 6px; }
   .chip:hover { border-color: var(--border-strong); color: var(--ink); }
-  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
   .chip .c { font-family: var(--mono); font-size: 11px; opacity: .8; }
   .chip.active .c { opacity: .9; }
   .chips-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
@@ -101,7 +101,7 @@
   .chip.chip-edit:hover { color: var(--ink); border-color: var(--border-strong); }
 
   /* Editor de grupos (localStorage) */
-  .group-editor { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  .group-editor { background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
     padding: 14px 16px; margin: -8px 0 24px; max-width: 540px; display: flex; flex-direction: column; gap: 8px; }
   .group-editor[hidden] { display: none; }
   .ge-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
@@ -115,11 +115,11 @@
   .ge-del:hover { color: var(--crit); background: var(--crit-soft); }
   .ge-empty { color: var(--ink-faint); font-family: var(--mono); font-size: 12px; }
   .ge-add { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
-  .ge-add input { padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border);
+  .ge-add input { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border);
     background: var(--surface-2); color: var(--ink); font-size: 13px; font-family: var(--font); min-width: 140px; }
   .ge-add input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-  .ge-add button { padding: 7px 13px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent);
-    color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .ge-add button { padding: 7px 13px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent);
+    color: var(--bg); font-size: 13px; font-weight: 600; cursor: pointer; }
   .ge-add button:hover { opacity: .9; }
   .ge-foot { margin-top: 4px; }
   .ge-foot button { padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); background: none;
@@ -129,14 +129,9 @@
   /* Grid */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(410px, 1fr)); gap: 14px; }
   .card { position: relative; background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px 18px 15px 20px; box-shadow: var(--shadow);
+    border-radius: var(--radius); padding: 16px 18px 15px; box-shadow: var(--shadow);
     display: flex; flex-direction: column; gap: 11px; transition: border-color .15s, transform .12s; }
   .card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
-  .card .sev { position: absolute; left: 0; top: 12px; bottom: 12px; width: 4px; border-radius: 4px;
-    background: var(--neutral); }
-  .card.sev-crit .sev { background: var(--crit); }
-  .card.sev-ok .sev { background: var(--ok); }
-  .card.sev-warn .sev { background: var(--warn); }
 
   .card-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .repo { font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600;
@@ -171,21 +166,44 @@
   .t-conflict { background: var(--crit-soft); color: var(--crit); }
   .t-neutral { background: var(--neutral-soft); color: var(--neutral); }
   .t-rebase { background: var(--warn-soft); color: var(--warn); }
-  .t-action { background: var(--accent); color: #fff; font-weight: 700; }
+  .t-action { background: var(--accent); color: var(--bg); font-weight: 700; }
   .t-ci-ok .dot { background: var(--ok); } .t-ci-fail .dot { background: var(--crit); }
   .t-ci-pend .dot { background: var(--warn); }
 
   .card-foot { display: flex; align-items: center; gap: 14px; font-family: var(--mono);
     font-size: 12px; color: var(--ink-muted); border-top: 1px solid var(--border); padding-top: 10px;
-    margin-top: 1px; }
+    margin-top: auto; }
   .card-foot .m { display: inline-flex; align-items: center; gap: 4px; }
   .card-foot .add { color: var(--ok); } .card-foot .del { color: var(--crit); }
   .card-foot .size { margin-left: auto; font-size: 10.5px; text-transform: uppercase;
     letter-spacing: .04em; font-weight: 700; padding: 2px 7px; border-radius: 5px;
     background: var(--surface-2); color: var(--ink-muted); border: 1px solid var(--border); }
 
-  .empty { text-align: center; padding: 60px 20px; color: var(--ink-faint); font-size: 15px; }
-  .count-line { font-size: 13px; color: var(--ink-muted); margin: 0 0 14px; font-family: var(--mono); }
+  /* Skeleton (initial load) */
+  .skel { position: relative; overflow: hidden; background: var(--surface); }
+  .skel::after { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, var(--surface-2), transparent);
+    transform: translateX(-100%); animation: shimmer 1.3s infinite; }
+  .skel-kpi { height: 98px; border: 1px solid var(--border); border-radius: var(--radius); }
+  .skel-card { height: 150px; border: 1px solid var(--border); border-radius: var(--radius); }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+  @media (prefers-reduced-motion: reduce) { .skel::after { animation: none; } }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--ink-faint); font-size: 15px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .empty .reset { font-family: var(--font); font-size: 13px; font-weight: 600; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 10px;
+    padding: 8px 16px; cursor: pointer; }
+  .empty .reset:hover { border-color: var(--accent); color: var(--accent); }
+  .count-bar { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; }
+  .count-line { font-size: 13px; color: var(--ink-muted); margin: 0; font-family: var(--mono); }
+  .clear-filters { font-family: var(--font); font-size: 12.5px; font-weight: 600; color: var(--ink-muted);
+    background: none; border: none; padding: 0; cursor: pointer; display: inline-flex; align-items: center;
+    gap: 6px; }
+  .clear-filters:hover { color: var(--accent); }
+  .clear-filters[hidden] { display: none; }
+  .clear-filters .n { font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
+    border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; }
 
   /* Unresolved-comment tag + panel */
   .t-thread-high { background: var(--crit-soft); color: var(--crit); }
@@ -242,10 +260,65 @@
   .rv-chip:hover { border-color: var(--accent); }
   .rv-empty { font-size: 11.5px; color: var(--ink-faint); font-family: var(--mono); }
 
-  /* Stacked tree view */
-  .stacks { display: flex; flex-direction: column; gap: 18px; }
-  .stack-group { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
-    padding: 14px 18px 16px; box-shadow: var(--shadow); }
+  /* Section panels (Stacked / Sync) */
+  .panels { display: flex; flex-direction: column; gap: 10px; margin: 0 0 20px; }
+  .panels:empty { display: none; }
+  .section-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+  .section-panel[hidden] { display: none; }
+  .section-panel > summary { cursor: pointer; list-style: none; padding: 12px 16px; display: flex;
+    align-items: center; gap: 10px; user-select: none; }
+  .section-panel > summary::-webkit-details-marker { display: none; }
+  .section-panel > summary::before { content: "▸"; color: var(--ink-faint); font-size: 12px;
+    transition: transform .15s; }
+  .section-panel[open] > summary::before { transform: rotate(90deg); }
+  .section-panel > summary:hover .sp-label { color: var(--accent); }
+  .sp-label { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .sp-n { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent);
+    background: var(--accent-soft); padding: 1px 8px; border-radius: 999px; }
+  .sp-hint { font-size: 11.5px; color: var(--ink-faint); margin-left: auto; }
+  .panel-body { padding: 4px 16px 16px; }
+
+  /* Sync pipeline (sin card anidada: se apoya en el panel, grupos con divisor) */
+  .sync-list { display: flex; flex-direction: column; }
+  .sync-card { padding: 14px 0; }
+  .sync-card:first-child { padding-top: 2px; }
+  .sync-card + .sync-card { border-top: 1px solid var(--border); }
+  .sync-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .sync-head .fork { color: var(--ink-faint); font-family: var(--mono); }
+  .sync-head .branch { font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--ink); }
+  .sync-head .repo { font-family: var(--mono); font-size: 11.5px; color: var(--accent);
+    background: var(--accent-soft); padding: 1px 8px; border-radius: 6px; margin-left: auto; }
+  .rail { display: flex; align-items: flex-start; overflow-x: auto; padding-bottom: 2px; }
+  .rail-node { flex: 1 1 0; min-width: 108px; display: flex; flex-direction: column; align-items: center;
+    text-align: center; position: relative; gap: 3px; }
+  .rail-node .dot { width: 13px; height: 13px; border-radius: 50%; background: var(--neutral);
+    border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border); z-index: 1; }
+  .rail-node.st-ok .dot { background: var(--ok); }
+  .rail-node.st-warn .dot { background: var(--warn); }
+  .rail-node.st-crit .dot { background: var(--crit); }
+  .rail-node .connector { position: absolute; top: 6px; left: 50%; width: 100%; height: 2px;
+    background: var(--border); z-index: 0; }
+  .rail-node .connector::after { content: ""; position: absolute; left: calc(50% - 3px); top: -3px;
+    border: 4px solid transparent; border-left-color: var(--ink-faint); }
+  .rail-node:last-child .connector { display: none; }
+  .rail-node .base { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--ink);
+    margin-top: 4px; }
+  .rail-node .pr { font-family: var(--mono); font-size: 11.5px; color: var(--ink-muted); text-decoration: none; }
+  .rail-node a.pr:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .rail-node .state { font-size: 11px; font-weight: 600; }
+  .rail-node.st-ok .state { color: var(--ok); }
+  .rail-node.st-warn .state { color: var(--warn); }
+  .rail-node.st-crit .state { color: var(--crit); }
+  .rail-node.st-neutral .state { color: var(--ink-faint); }
+  .rail-node.ghost { opacity: .6; }
+  .rail-node.ghost .dot { background: none; border: 2px dashed var(--ink-faint); box-shadow: none; }
+  .rail-node.ghost .base, .rail-node.ghost .state, .rail-node.ghost .pr { color: var(--ink-faint); }
+
+  /* Stacked tree view (sin card anidada: se apoya en el panel, stacks con divisor) */
+  .stacks { display: flex; flex-direction: column; }
+  .stack-group { padding: 14px 0 16px; }
+  .stack-group:first-child { padding-top: 2px; }
+  .stack-group + .stack-group { border-top: 1px solid var(--border); }
   .stack-ground { font-family: var(--mono); font-size: 12px; color: var(--ink-muted); margin-bottom: 10px;
     display: flex; flex-direction: column; gap: 8px; }
   .stack-ground .b { background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px;
@@ -267,11 +340,8 @@
   .snode-row .conn { font-family: var(--mono); color: var(--ink-faint); font-size: 14px; padding-top: 12px;
     flex: none; }
   .mini { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
-    padding: 11px 13px; border-left: 4px solid var(--neutral); display: flex; flex-direction: column; gap: 7px;
+    padding: 11px 13px; display: flex; flex-direction: column; gap: 7px;
     min-width: 0; }
-  .mini.sev-crit { border-left-color: var(--crit); }
-  .mini.sev-ok { border-left-color: var(--ok); }
-  .mini.sev-warn { border-left-color: var(--warn); }
   .mini-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .mini-head a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px;
     letter-spacing: -.01em; }
@@ -288,8 +358,10 @@
   .stag.st-wait { background: var(--neutral-soft); color: var(--ink-muted); font-weight: 600; }
 
   /* Clickable thread item + modal */
-  .thread-item { cursor: pointer; }
+  .thread-item { cursor: pointer; border-radius: 8px; }
   .thread-item:hover .ttl { color: var(--accent); }
+  .thread-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .thread-item:focus-visible .ttl { color: var(--accent); }
   .modal-overlay { position: fixed; inset: 0; background: rgba(10,8,16,.72);
     -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
     display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100; }
@@ -329,10 +401,15 @@
   .modal-body a:hover { text-decoration: underline; text-underline-offset: 2px; }
   .modal-body code { font-family: var(--mono); font-size: 12px; background: var(--surface-2);
     border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; }
-  .modal-body pre { background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px;
+  .modal-body pre { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
     padding: 12px 13px; overflow-x: auto; margin: 0 0 12px; }
   .modal-body pre code { background: none; border: none; padding: 0; font-size: 12px; line-height: 1.5;
-    white-space: pre; }
+    white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+  .modal-body details { margin: 0 0 12px; border: 1px solid var(--border); border-radius: 10px;
+    padding: 9px 12px; background: var(--surface-2); }
+  .modal-body summary { cursor: pointer; color: var(--ink-muted); font-weight: 600; user-select: none; }
+  .modal-body summary:hover { color: var(--ink); }
+  .modal-body details[open] > summary { margin-bottom: 8px; }
   .modal-foot { padding: 12px 20px 16px; border-top: 1px solid var(--border); }
   .modal-foot a { color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 600; }
   .modal-foot a:hover { text-decoration: underline; text-underline-offset: 2px; }
@@ -347,17 +424,29 @@
     .meta-time { text-align: left; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  /* Touch devices: ≥44px tap targets (density preserved for mouse/fine pointers) */
+  @media (pointer: coarse) {
+    .chip, .clear-filters { min-height: 44px; }
+    .search input, #sort, .refresh-btn { min-height: 44px; }
+    .ge-add input, .ge-add button, .ge-foot button { min-height: 44px; }
+    .ge-del { min-width: 40px; min-height: 40px; }
+    .modal-close { min-width: 44px; min-height: 44px; display: inline-flex;
+      align-items: center; justify-content: center; }
+    .thread-item { padding-block: 6px; }
+  }
 </style>
 
 <div class="wrap">
   <header class="top">
     <div class="title-block">
       <h1><span class="brand-dot"></span> Mis Pull Requests</h1>
-      <p class="subtitle"><b id="s-total">–</b> PRs abiertas · autor <b>__AUTHOR__</b> · <b id="s-repos">–</b> repos</p>
+      <p class="subtitle"><b id="s-total">–</b> PRs abiertas · autor <b id="s-author"></b> · <b id="s-repos">–</b> repos</p>
     </div>
-    <div class="meta-time">generado<br>__GENERATED_AT__</div>
+    <div class="meta-time">generado<br><span id="s-generated"></span></div>
   </header>
 
+  <main>
   <div class="kpis" id="kpis"></div>
 
   <div class="controls">
@@ -373,16 +462,30 @@
       <option value="repo">Por repo</option>
     </select>
     <button class="refresh-btn" id="refresh-btn" hidden><span class="spin">↻</span> Actualizar</button>
-    <span class="refresh-status" id="refresh-status"></span>
+    <span class="refresh-status" id="refresh-status" role="status" aria-live="polite" aria-atomic="true"></span>
   </div>
 
   <div class="chips" id="branch-chips"></div>
-  <div class="chips" id="state-chips"></div>
   <div class="chips" id="group-chips"></div>
   <div class="group-editor" id="group-editor" hidden></div>
 
-  <p class="count-line" id="count-line"></p>
+  <div class="panels" id="panels">
+    <details class="section-panel" id="stacked-panel" hidden>
+      <summary><span class="sp-label">Stacked</span><span class="sp-n" id="stacked-n"></span><span class="sp-hint">árbol de PRs apiladas</span></summary>
+      <div class="panel-body" id="stacked-body"></div>
+    </details>
+    <details class="section-panel" id="sync-panel" hidden>
+      <summary><span class="sp-label">Sync PRs</span><span class="sp-n" id="sync-n"></span><span class="sp-hint">misma rama hacia varios base</span></summary>
+      <div class="panel-body" id="sync-body"></div>
+    </details>
+  </div>
+
+  <div class="count-bar">
+    <p class="count-line" id="count-line"></p>
+    <button class="clear-filters" id="clear-filters" type="button" hidden>limpiar filtros <span class="n" id="clear-n"></span></button>
+  </div>
   <div class="grid" id="grid"></div>
+  </main>
 </div>
 
 <div class="modal-overlay" id="modal" hidden>
@@ -399,7 +502,7 @@
 </div>
 
 <script>
-const DATA = __PR_DATA__;
+let DATA = [];
 
 const STD_BASES = ["master","main","development","staging"];
 const NOW = new Date();
@@ -458,11 +561,36 @@ function sizeLabel(p){
 }
 function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
+// ---- filter axes ----
+// KPIs are the single status filter. Base and Group are orthogonal axes.
+function qval(){ return document.getElementById("q").value.trim().toLowerCase(); }
+function passBranch(p){ return !activeBranch || p.base===activeBranch; }
+function passGroup(p){ return !activeGroup || p.repo.toLowerCase().includes(activeGroup); }
+function passSearch(p,q){ return !q || (p.title+" "+p.repo+" "+p.head+" "+p.base+" #"+p.number).toLowerCase().includes(q); }
+// The universe KPI counts and the grid share: everything except the KPI status filter itself,
+// so KPI numbers always match what clicking them yields within the current base/group/search scope.
+function kpiUniverse(){ const q=qval(); return DATA.filter(p=> passBranch(p)&&passGroup(p)&&passSearch(p,q)); }
+
+function activeFilterCount(){
+  return (activeKpi?1:0)+(activeBranch?1:0)+(activeGroup?1:0)+(qval()?1:0);
+}
+function clearFilters(){
+  activeKpi = null; activeBranch = null; activeGroup = null;
+  document.getElementById("q").value = "";
+  render();
+}
+function updateClearFilters(){
+  const n = activeFilterCount();
+  document.getElementById("clear-n").textContent = n;
+  document.getElementById("clear-filters").hidden = n===0;
+}
+
 // ---- KPIs ----
 const kpiDefs = [
   {key:"total", cls:"k-total", label:"Abiertas", test:()=>true},
   {key:"action", cls:"k-action", label:"Requiere mi acción", test:p=>myActionReason(p)!==null},
   {key:"ready", cls:"k-ready", label:"Listas p/ merge", test:p=>p.reviewDecision==="APPROVED" && ciState(p)!=="fail" && p.mergeable!=="CONFLICTING"},
+  {key:"approved", cls:"k-approved", label:"Aprobadas", test:p=>p.reviewDecision==="APPROVED"},
   {key:"review", cls:"k-review", label:"Esperan review", test:p=>p.reviewDecision==="REVIEW_REQUIRED"},
   {key:"ci", cls:"k-ci", label:"CI en rojo", test:p=>ciFailCats(p).length>0},
   {key:"conflict", cls:"k-conflict", label:"Con conflictos", test:p=>p.mergeable==="CONFLICTING"},
@@ -472,10 +600,10 @@ let activeKpi = null;
 
 function renderKpis(){
   const el = document.getElementById("kpis");
+  const uni = kpiUniverse();
   el.innerHTML = kpiDefs.map(k=>{
-    const n = DATA.filter(k.test).length;
+    const n = uni.filter(k.test).length;
     return `<button class="kpi ${k.cls} ${activeKpi===k.key?'active':''}" data-kpi="${k.key}">
-      <span class="stripe"></span>
       <div class="num">${n}</div>
       <div class="lbl">${k.label}</div>
     </button>`;
@@ -491,45 +619,16 @@ function renderKpis(){
 let activeBranch = null;
 function renderBranchChips(){
   const buckets = {};
-  DATA.forEach(p=>{
-    const key = STD_BASES.includes(p.base) ? p.base : "stacked";
-    buckets[key] = (buckets[key]||0)+1;
-  });
-  const order = ["master","development","staging","main","stacked"];
-  const chips = order.filter(k=>buckets[k]).map(k=>{
-    const label = k==="stacked" ? "↳ stacked" : k;
-    return `<button class="chip ${activeBranch===k?'active':''}" data-br="${k}">${label} <span class="c">${buckets[k]}</span></button>`;
-  }).join("");
+  DATA.forEach(p=>{ if(STD_BASES.includes(p.base)) buckets[p.base] = (buckets[p.base]||0)+1; });
+  const order = ["master","development","staging","main"];
+  const chips = order.filter(k=>buckets[k]).map(k=>
+    `<button class="chip ${activeBranch===k?'active':''}" data-br="${k}">${k} <span class="c">${buckets[k]}</span></button>`).join("");
   const el = document.getElementById("branch-chips");
   el.innerHTML = `<span class="chips-label">Base</span>
     <button class="chip ${activeBranch===null?'active':''}" data-br="">Todas <span class="c">${DATA.length}</span></button>`+chips;
   el.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
     const v=b.dataset.br;
     activeBranch = v==="" ? null : (activeBranch===v?null:v);
-    render();
-  });
-}
-
-// ---- state chips ----
-let activeState = null;
-const STATE_DEFS = [
-  {key:"myaction",  label:"Requiere mi acción", test:p=>myActionReason(p)!==null},
-  {key:"unapproved", label:"Sin aprobar", test:p=>p.reviewDecision!=="APPROVED"},
-  {key:"approved",   label:"Aprobado",    test:p=>p.reviewDecision==="APPROVED"},
-  {key:"conflict",   label:"Con conflicto", test:p=>p.mergeable==="CONFLICTING"},
-  {key:"rebase",     label:"Necesita rebase", test:p=>needsRebase(p)},
-];
-function renderStateChips(){
-  const chips = STATE_DEFS.map(s=>{
-    const n = DATA.filter(s.test).length;
-    return `<button class="chip ${activeState===s.key?'active':''}" data-st="${s.key}">${s.label} <span class="c">${n}</span></button>`;
-  }).join("");
-  const el = document.getElementById("state-chips");
-  el.innerHTML = `<span class="chips-label">Estado</span>
-    <button class="chip ${activeState===null?'active':''}" data-st="">Todos <span class="c">${DATA.length}</span></button>`+chips;
-  el.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
-    const v=b.dataset.st;
-    activeState = v==="" ? null : (activeState===v?null:v);
     render();
   });
 }
@@ -659,7 +758,7 @@ function threadTag(p){
 function threadPanel(p){
   const t = p.threads;
   if(!t || !t.unresolved) return "";
-  const rows = t.items.map((it,i)=>`<li class="thread-item sev-${it.severity||'none'}" data-th="${p.number}|${encodeURIComponent(p.repo)}|${i}" title="Ver comentario completo">
+  const rows = t.items.map((it,i)=>`<li class="thread-item sev-${it.severity||'none'}" data-th="${p.number}|${encodeURIComponent(p.repo)}|${i}" role="button" tabindex="0" aria-label="Ver comentario: ${esc(it.title)}" title="Ver comentario completo">
     <span class="sdot"></span>
     <span class="ttl">${esc(it.title)}${it.outdated?'<span class="out">outdated</span>':''}</span>
     <span class="meta2"><span>${esc(it.path||'—')}${it.line?':'+it.line:''}</span><span class="who">@${esc(it.author)}</span></span>
@@ -697,7 +796,6 @@ function card(p){
   const stale = daysAgo(p.updatedAt) >= 30;
   const size = sizeLabel(p);
   return `<article class="card sev-${sev}">
-    <span class="sev"></span>
     <div class="card-head">
       <span class="repo">${esc(p.repo)}</span>
       <span class="prnum">#${p.number}</span>
@@ -798,59 +896,109 @@ function healthBar(r){
       <span class="hnums"><span class="add">+${roll.adds}</span> <span class="del">−${roll.dels}</span></span>
     </div>`;
 }
-function renderStacks(q){
+// ---- Stacked panel (árbol de PRs apiladas; honra Grupo + búsqueda, no Base) ----
+function renderStackedPanel(){
+  const q = qval();
   let roots = stackRoots();
-  if(activeGroup){
-    roots = roots.filter(r=> flattenStack(r).some(p=> p.repo.toLowerCase().includes(activeGroup)));
+  if(activeGroup) roots = roots.filter(r=> flattenStack(r).some(p=> p.repo.toLowerCase().includes(activeGroup)));
+  if(q) roots = roots.filter(r=> flattenStack(r).some(p=>
+    (p.title+" "+p.repo+" "+p.head+" "+p.base+" #"+p.number).toLowerCase().includes(q)));
+  document.getElementById("stacked-n").textContent = roots.length;
+  document.getElementById("stacked-panel").hidden = roots.length===0;
+  document.getElementById("stacked-body").innerHTML = roots.length
+    ? `<div class="stacks">` + roots.map(r=>
+        `<div class="stack-group"><div class="stack-ground">${healthBar(r)}</div>${stackNode(r,0)}</div>`).join("") + `</div>`
+    : "";
+}
+
+// ---- Sync panel (misma rama head hacia >1 base; honra Grupo + búsqueda, no Base) ----
+const BASE_RANK = { development:0, dev:0, staging:1, stg:1, master:2, main:2 };
+const STAGE_NAME = ["development","staging","master"];
+function baseRank(b){ return (b in BASE_RANK) ? BASE_RANK[b] : 99; }
+// Build the rail slots: fill missing standard stages between the lowest and
+// highest present stage with ghost nodes, so a skipped "staging" is visible.
+function syncRail(prs){
+  const std = prs.filter(p=> baseRank(p.base)<=2);
+  const nonStd = prs.filter(p=> baseRank(p.base)>2);
+  const slots = [];
+  if(std.length){
+    const ranks = std.map(p=>baseRank(p.base));
+    const lo = Math.min(...ranks), hi = Math.max(...ranks);
+    for(let r=lo; r<=hi; r++){
+      const pr = std.find(p=>baseRank(p.base)===r);
+      slots.push(pr ? {pr, base:pr.base} : {ghost:true, base:STAGE_NAME[r]});
+    }
   }
-  if(q){
-    roots = roots.filter(r=> flattenStack(r).some(p=>
-      (p.title+" "+p.repo+" "+p.head+" "+p.base+" #"+p.number).toLowerCase().includes(q)));
-  }
-  const grid = document.getElementById("grid");
-  grid.className = "stacks";
-  grid.innerHTML = roots.length ? roots.map(r=>
-    `<div class="stack-group">
-      <div class="stack-ground">${healthBar(r)}</div>
-      ${stackNode(r,0)}
-    </div>`).join("") : `<div class="empty">No hay PRs apiladas (ninguna PR usa como base la rama de otra).</div>`;
-  document.getElementById("count-line").textContent =
-    `${roots.length} stack(s) · ${roots.reduce((n,r)=>n+flattenStack(r).length,0)} PRs encadenadas`;
+  nonStd.forEach(p=> slots.push({pr:p, base:p.base}));
+  return slots;
+}
+function syncGroups(){
+  const q = qval();
+  const byHead = {};
+  DATA.forEach(p=>{
+    if(activeGroup && !p.repo.toLowerCase().includes(activeGroup)) return;
+    (byHead[p.head] = byHead[p.head] || []).push(p);
+  });
+  let groups = Object.entries(byHead).filter(([h,prs])=> prs.length>1).map(([head,prs])=>({
+    head, repo: prs[0].repo,
+    prs: prs.slice().sort((a,b)=> baseRank(a.base)-baseRank(b.base) || a.number-b.number),
+  }));
+  if(q) groups = groups.filter(g=> g.prs.some(p=>
+    (p.title+" "+p.repo+" "+p.head+" "+p.base+" #"+p.number).toLowerCase().includes(q)));
+  return groups.sort((a,b)=> a.head.localeCompare(b.head));
+}
+function syncStateWord(p){
+  if(severity(p)==="crit") return ciState(p)==="fail" ? "CI ✗" : "conflicto";
+  if(p.reviewDecision==="APPROVED") return "aprobada";
+  if(needsRebase(p)) return "rebase";
+  if(p.reviewDecision==="REVIEW_REQUIRED") return "falta review";
+  return "—";
+}
+function renderSyncPanel(){
+  const groups = syncGroups();
+  document.getElementById("sync-n").textContent = groups.length;
+  document.getElementById("sync-panel").hidden = groups.length===0;
+  document.getElementById("sync-body").innerHTML = groups.length
+    ? `<div class="sync-list">` + groups.map(g=>{
+        const nodes = syncRail(g.prs).map(slot=>{
+          if(slot.ghost) return `<div class="rail-node ghost">
+            <span class="connector"></span><span class="dot"></span>
+            <span class="base">${esc(slot.base)}</span>
+            <span class="pr">—</span>
+            <span class="state">sin PR</span>
+          </div>`;
+          const p = slot.pr;
+          return `<div class="rail-node st-${severity(p)}">
+            <span class="connector"></span><span class="dot"></span>
+            <span class="base">${esc(p.base)}</span>
+            <a class="pr" href="${p.url}" target="_blank" rel="noopener">#${p.number}</a>
+            <span class="state">${syncStateWord(p)}</span>
+          </div>`;
+        }).join("");
+        return `<div class="sync-card">
+          <div class="sync-head"><span class="fork">⋔</span><span class="branch">${esc(g.head)}</span><span class="repo">${esc(g.repo)}</span></div>
+          <div class="rail">${nodes}</div>
+        </div>`;
+      }).join("") + `</div>`
+    : "";
 }
 
 // ---- render ----
 function render(){
   renderKpis();
   renderBranchChips();
-  renderStateChips();
   renderGroupChips();
-  const q = document.getElementById("q").value.trim().toLowerCase();
+  renderStackedPanel();
+  renderSyncPanel();
+  updateClearFilters();
   const sort = document.getElementById("sort").value;
   const grid = document.getElementById("grid");
-
-  if(activeBranch==="stacked"){
-    renderStacks(q);
-    return;
-  }
   grid.className = "grid";
 
-  let list = DATA.slice();
+  let list = kpiUniverse();   // base + group + search already applied
   if(activeKpi){
     const def = kpiDefs.find(k=>k.key===activeKpi);
     if(def) list = list.filter(def.test);
-  }
-  if(activeBranch){
-    list = list.filter(p=> p.base===activeBranch);
-  }
-  if(activeState){
-    const def = STATE_DEFS.find(s=>s.key===activeState);
-    if(def) list = list.filter(def.test);
-  }
-  if(activeGroup){
-    list = list.filter(p=> p.repo.toLowerCase().includes(activeGroup));
-  }
-  if(q){
-    list = list.filter(p=> (p.title+" "+p.repo+" "+p.head+" "+p.base+" #"+p.number).toLowerCase().includes(q));
   }
 
   const sorters = {
@@ -863,10 +1011,69 @@ function render(){
   list.sort(sorters[sort]);
 
   grid.innerHTML = list.length ? list.map(card).join("")
-    : `<div class="empty">Ninguna PR coincide con los filtros.</div>`;
+    : `<div class="empty">Ninguna PR coincide con los filtros.
+        <button class="reset" type="button" id="empty-reset">Limpiar filtros</button></div>`;
+  const rb = grid.querySelector("#empty-reset");
+  if(rb) rb.onclick = clearFilters;
 
   document.getElementById("count-line").textContent =
     `Mostrando ${list.length} de ${DATA.length} PRs`;
+}
+
+// Render a GitHub comment (markdown + embedded HTML) as SAFE html.
+// Parses the raw HTML inertly (in a <template>, no script exec / no image load),
+// sanitizes to a tag/attr whitelist (drops script/iframe/style/on*/javascript:),
+// and renders markdown found in block-level text nodes (prose, code fences).
+// Keeps <details> collapsibles, code, links and images (images allowed for now).
+const MD_ALLOWED = new Set(['P','BR','STRONG','B','EM','I','CODE','PRE','UL','OL','LI','A','DETAILS','SUMMARY','H1','H2','H3','H4','H5','H6','BLOCKQUOTE','HR','SPAN','DIV','DEL','KBD','TABLE','THEAD','TBODY','TR','TH','TD']);
+const MD_DROP = new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','NOSCRIPT','SVG','FORM','INPUT','BUTTON','TEXTAREA','SELECT','BASE','IMG','PICTURE','SOURCE']);
+const MD_BLOCK_PARENT = new Set(['DIV','DETAILS','LI','BLOCKQUOTE','TD']);
+const MD_LITERAL = new Set(['PRE','CODE','SUMMARY']);
+function safeUrl(u){ return /^(https?:|mailto:)/i.test(u||"") ? u : null; }
+function ancestorIn(node, set){
+  for(let p=node.parentNode; p && p.tagName; p=p.parentNode){ if(set.has(p.tagName)) return true; }
+  return false;
+}
+function sanitizeFrag(root){
+  [...root.childNodes].forEach(node=>{
+    if(node.nodeType===8){ node.remove(); return; }              // comment node
+    if(node.nodeType===3){                                       // text node
+      if(!node.textContent.trim()) return;
+      const p = node.parentNode;
+      const blockCtx = p && (p.nodeType===11 || MD_BLOCK_PARENT.has(p.tagName));
+      if(blockCtx && !ancestorIn(node, MD_LITERAL)){
+        const t = document.createElement('template');
+        t.innerHTML = mdToHtml(node.textContent);                // safe: escapes then formats
+        node.replaceWith(t.content);
+      }
+      return;
+    }
+    if(node.nodeType!==1){ node.remove(); return; }
+    const tag = node.tagName;
+    if(MD_DROP.has(tag)){ node.remove(); return; }
+    if(!MD_ALLOWED.has(tag)){ sanitizeFrag(node); node.replaceWith(...node.childNodes); return; }
+    const keep = {};
+    if(tag==='A'){ const h=safeUrl(node.getAttribute('href')); if(h){ keep.href=h; keep.target='_blank'; keep.rel='noopener noreferrer'; } }
+    [...node.attributes].forEach(at=>node.removeAttribute(at.name));
+    Object.entries(keep).forEach(([k,v])=>node.setAttribute(k,v));
+    sanitizeFrag(node);
+  });
+}
+function renderComment(src){
+  if(!src) return "";
+  let s = String(src);
+  // Protect code (fenced + inline) BEFORE HTML parsing, so angle-bracket text
+  // inside a fence (<comment>, <file context>) isn't mis-parsed as HTML tags.
+  const blocks = [], inls = [];
+  s = s.replace(/```[^\n]*\n([\s\S]*?)```/g, (m,c)=>{ blocks.push(c.replace(/\n$/,"")); return "\uE000B"+(blocks.length-1)+"\uE001"; });
+  s = s.replace(/`([^`\n]+)`/g, (m,c)=>{ inls.push(c); return "\uE000I"+(inls.length-1)+"\uE001"; });
+  const t = document.createElement("template");
+  t.innerHTML = s;
+  sanitizeFrag(t.content);
+  let out = t.innerHTML;
+  out = out.replace(/\uE000B(\d+)\uE001/g, (m,n)=>`<pre><code>${esc(blocks[+n])}</code></pre>`);
+  out = out.replace(/\uE000I(\d+)\uE001/g, (m,n)=>`<code>${esc(inls[+n])}</code>`);
+  return out;
 }
 
 // ---- minimal, safe markdown renderer (escapes first, then formats) ----
@@ -919,6 +1126,7 @@ function mdToHtml(src){
 }
 
 // ---- comment modal ----
+let lastFocused = null;
 function findThread(num, repo, idx){
   const p = DATA.find(x=>x.number===num && x.repo===repo);
   return p && p.threads && p.threads.items ? p.threads.items[idx] : null;
@@ -935,34 +1143,84 @@ function openThread(it){
     `<span>${esc(it.path||"—")}${it.line?":"+it.line:""}</span>`+
     `<span class="who">@${esc(it.author)}</span>`+
     (it.outdated?'<span class="out">outdated</span>':"");
-  document.getElementById("modal-body").innerHTML = mdToHtml(it.body || it.title || "(sin contenido)");
+  document.getElementById("modal-body").innerHTML =
+    renderComment(it.body || "") || mdToHtml(it.title || "(sin contenido)");
   const link = document.getElementById("modal-link");
   if(it.url){ link.href = it.url; link.style.display = ""; } else { link.style.display = "none"; }
+  lastFocused = document.activeElement;
   document.getElementById("modal").hidden = false;
   document.body.style.overflow = "hidden";
+  document.getElementById("modal-close").focus();
 }
 function closeModal(){
-  document.getElementById("modal").hidden = true;
+  const modal = document.getElementById("modal");
+  if(modal.hidden) return;
+  modal.hidden = true;
   document.body.style.overflow = "";
+  if(lastFocused && typeof lastFocused.focus === "function") lastFocused.focus();
+  lastFocused = null;
+}
+function openFromItem(li){
+  const [num, repoEnc, idx] = li.dataset.th.split("|");
+  openThread(findThread(+num, decodeURIComponent(repoEnc), +idx));
 }
 document.getElementById("grid").addEventListener("click", e=>{
   const li = e.target.closest(".thread-item");
+  if(li) openFromItem(li);
+});
+document.getElementById("grid").addEventListener("keydown", e=>{
+  if(e.key!=="Enter" && e.key!==" ") return;
+  const li = e.target.closest(".thread-item");
   if(!li) return;
-  const [num, repoEnc, idx] = li.dataset.th.split("|");
-  openThread(findThread(+num, decodeURIComponent(repoEnc), +idx));
+  e.preventDefault();
+  openFromItem(li);
 });
 document.getElementById("modal-close").addEventListener("click", closeModal);
 document.getElementById("modal").addEventListener("click", e=>{ if(e.target.id==="modal") closeModal(); });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+// focus trap inside the open modal
+document.getElementById("modal").addEventListener("keydown", e=>{
+  if(e.key!=="Tab") return;
+  const modal = document.getElementById("modal");
+  const list = [...modal.querySelectorAll('a[href], button, [tabindex]:not([tabindex="-1"])')]
+    .filter(el=>el.offsetParent!==null);
+  if(!list.length) return;
+  const first = list[0], last = list[list.length-1];
+  if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+});
 
-// init
-document.getElementById("s-total").textContent = DATA.length;
-document.getElementById("s-repos").textContent = new Set(DATA.map(p=>p.repo)).size;
-renderKpis();
-renderBranchChips();
+// init (v2: datos desde /data.json)
 document.getElementById("q").addEventListener("input", render);
 document.getElementById("sort").addEventListener("change", render);
-render();
+document.getElementById("clear-filters").addEventListener("click", clearFilters);
+async function loadData(){
+  const d = await (await fetch('/data.json', {cache:'no-store'})).json();
+  DATA = d.prs || [];
+  document.getElementById("s-author").textContent = d.author || "";
+  document.getElementById("s-generated").textContent = d.generatedAt || "";
+  document.getElementById("s-total").textContent = DATA.length;
+  document.getElementById("s-repos").textContent = new Set(DATA.map(p=>p.repo)).size;
+}
+function renderSkeleton(){
+  document.getElementById("kpis").innerHTML =
+    Array.from({length:7}, ()=>'<div class="skel skel-kpi"></div>').join("");
+  const grid = document.getElementById("grid");
+  grid.className = "grid";
+  grid.innerHTML = Array.from({length:6}, ()=>'<div class="skel skel-card"></div>').join("");
+}
+async function boot(){
+  renderSkeleton();
+  try { await loadData(); }
+  catch(e){
+    document.getElementById("count-line").textContent = "No pude cargar /data.json (¿server arriba?)";
+    document.getElementById("kpis").innerHTML = "";
+    document.getElementById("grid").innerHTML = "";
+    return;
+  }
+  render();
+}
+boot();
 
 // ---- on-demand refresh (only when served by the local server, not file://) ----
 (function(){
@@ -985,11 +1243,20 @@ render();
       return;
     }
     if(s.last && s.last.ok === false){
-      statusEl.textContent = "falló: " + String(s.last.error||"").slice(0,80);
+      const err = String(s.last.error||"");
+      statusEl.textContent = "falló: " + err.slice(0,160);
+      statusEl.title = err;
       finish();
     } else {
-      statusEl.textContent = "listo, recargando…";
-      location.reload();
+      statusEl.textContent = "actualizando datos…";
+      try {
+        await loadData();
+        render();   // preserva filtros, búsqueda y scroll (sin recargar la página)
+        statusEl.textContent = "actualizado ✓";
+      } catch(e){
+        statusEl.textContent = "actualizado, pero no pude releer los datos";
+      }
+      finish();
     }
   }
   function finish(){ btn.disabled = false; btn.classList.remove("loading"); }

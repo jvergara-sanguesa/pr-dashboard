@@ -9,6 +9,11 @@ refresh.log
 # Config local (valores personales)
 settings.py
 
+# Skills instaladas localmente (ej. impeccable vía npx skills add)
+.agents/
+.claude/skills/
+skills-lock.json
+
 # Python / macOS
 __pycache__/
 *.pyc
